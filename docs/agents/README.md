@@ -51,8 +51,30 @@ La deuxieme vague transforme la strategie en influence, growth, plateforme, cale
 Specs disponibles dans cette vague :
 
 ```text
+docs/agents/analysis/
+  performance_analyst.md
+docs/agents/content/
+  hook_master.md
+  copywriter.md
+docs/agents/creative/
+  creative_director.md
+docs/agents/experimentation/
+  experimentation_agent.md
+docs/agents/growth/
+  growth_hacker.md
+docs/agents/planning/
+  calendar_architect.md
+docs/agents/platform/
+  facebook_native_agent.md
+  linkedin_native_agent.md
+docs/agents/quality/
+  anti_banality_agent.md
+docs/agents/risk/
+  risk_reviewer.md
 docs/agents/strategy/
   influence_architect.md
+docs/agents/video/
+  video_agent.md
 ```
 
 ## Regle
