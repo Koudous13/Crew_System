@@ -591,12 +591,16 @@ class AgentRun(RuntimeModel):
     job_id: str
     agent_id: str
     status: AgentRunStatus
+    agent_version: str = ""
+    task_id: str = ""
+    execution_mode: str = ""
     input_artifacts: list[str] = field(default_factory=list)
     output_artifacts: list[str] = field(default_factory=list)
     started_at: str = ""
     ended_at: str = ""
     quality_score: int | None = None
     confidence_score: int | None = None
+    risk_flags: list[str] = field(default_factory=list)
     error: str = ""
 
     def validate(self) -> None:
@@ -604,8 +608,11 @@ class AgentRun(RuntimeModel):
         validate_identifier(self.agent_run_id, "AgentRun.agent_run_id")
         validate_identifier(self.job_id, "AgentRun.job_id")
         validate_agent_id(self.agent_id, "AgentRun.agent_id")
+        if self.task_id:
+            validate_identifier(self.task_id, "AgentRun.task_id")
         validate_string_list(self.input_artifacts, "AgentRun.input_artifacts")
         validate_string_list(self.output_artifacts, "AgentRun.output_artifacts")
+        validate_string_list(self.risk_flags, "AgentRun.risk_flags")
         validate_score(self.quality_score, "AgentRun.quality_score", allow_none=True)
         validate_score(self.confidence_score, "AgentRun.confidence_score", allow_none=True)
         if self.status is AgentRunStatus.FAILED and not self.error:
