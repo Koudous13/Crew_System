@@ -1,13 +1,13 @@
-# Agent Specs - Crew_System
+# Specs Agents - Crew_System
 
 ## Role
 
-This folder contains the concrete agent specifications used by Crew_System.
+Ce dossier contient les specifications concretes des agents de Crew_System.
 
-The contracts define the system.
-These files define the first real agents.
+Les contrats definissent le systeme.
+Ces fichiers definissent les premiers vrais agents.
 
-Reference documents:
+Documents de reference :
 
 - `docs/AGENT_BLUEPRINT.md`
 - `docs/AGENT_REGISTRY_CONTRACT.md`
@@ -15,11 +15,11 @@ Reference documents:
 - `docs/CAMPAIGN_PACK_CONTRACT.md`
 - `docs/PROJECT_FILE_SYSTEM_CONTRACT.md`
 
-## First Wave
+## Premiere Vague
 
-The first wave focuses on foundation agents.
+La premiere vague se concentre sur les agents de fondation.
 
-These agents are required before content, growth, creative or video agents can produce reliable work.
+Ces agents sont necessaires avant que les agents de contenu, growth, creation ou video puissent produire un travail fiable.
 
 ```text
 docs/agents/core/
@@ -30,31 +30,42 @@ docs/agents/core/
   positioning_agent.md
 ```
 
-## Why These Agents First
+## Pourquoi Ces Agents D'Abord
 
-`intake_normalizer` transforms a raw user idea into a usable brief.
+`intake_normalizer` transforme une idee brute en brief utilisable.
 
-`file_architect` makes the project durable by planning folders, files and manifests.
+`file_architect` rend le projet durable en planifiant les dossiers, fichiers et manifests.
 
-`strategist` defines the strategic problem, big idea and arbitration logic.
+`strategist` definit le probleme strategique, la big idea et la logique d'arbitrage.
 
-`audience_psychologist` identifies the human tensions that make the campaign powerful.
+`audience_psychologist` identifie les tensions humaines qui rendent une campagne puissante.
 
-`positioning_agent` transforms the offer into a clear, memorable and defensible position.
+`positioning_agent` transforme l'offre en position claire, memorable et defendable.
 
-Without these five agents, the system can generate content, but it cannot stay coherent.
+Sans ces cinq agents, le systeme peut generer du contenu, mais il ne peut pas rester coherent.
 
-## Rule
+## Deuxieme Vague
 
-No agent should be implemented in code before its spec exists here and satisfies the blueprint.
+La deuxieme vague transforme la strategie en influence, growth, plateforme, calendrier et production de contenu.
 
-## Spec Status
+Specs disponibles dans cette vague :
 
-These Markdown files are human-readable agent specs.
+```text
+docs/agents/strategy/
+  influence_architect.md
+```
 
-They are not yet the final machine-readable registry entries.
+## Regle
 
-The next implementation layer can derive or mirror them into:
+Aucun agent ne doit etre implemente dans le code tant que sa spec n'existe pas ici et ne respecte pas le blueprint.
+
+## Statut Des Specs
+
+Ces fichiers Markdown sont les specifications humaines des agents.
+
+Ce ne sont pas encore les entrees machine finales du registre.
+
+La couche d'implementation suivante pourra les deriver ou les dupliquer vers :
 
 ```text
 registry/agents/*.yaml
@@ -63,28 +74,28 @@ registry/schemas/*.json
 registry/evals/*.json
 ```
 
-Until schemas and evals are executable, these agents stay `draft`.
+Tant que les schemas et evals ne sont pas executables, ces agents restent `draft`.
 
-## Completeness Check
+## Verification De Completude
 
-Each agent spec must contain:
+Chaque spec agent doit contenir :
 
-- identity ;
+- identite ;
 - mission ;
-- CrewAI mapping ;
-- ownership ;
+- mapping CrewAI ;
+- responsabilites ;
 - inputs ;
-- output contract ;
-- routing ;
-- dependencies ;
-- guardrails ;
+- contrat de sortie ;
+- routage ;
+- dependances ;
+- garde-fous ;
 - quality gates ;
 - handoff ;
-- system prompt draft ;
-- evaluation cases ;
-- reasoning method ;
-- tools ;
-- memory policy ;
+- prompt systeme draft ;
+- cas d'evaluation ;
+- methode de raisonnement ;
+- outils ;
+- politique memoire ;
 - execution ;
-- observability ;
+- observabilite ;
 - versioning.
