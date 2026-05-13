@@ -651,7 +651,7 @@ Il doit relancer si :
 
 Le runtime ne doit pas connaitre les agents en dur dans toutes ses fonctions.
 
-Il doit s'appuyer sur un futur registre d'agents.
+Il doit s'appuyer sur le registre d'agents defini dans `AGENT_REGISTRY_CONTRACT.md`.
 
 Le registre devra fournir :
 
@@ -670,7 +670,7 @@ agent_registry_entry:
 ```
 
 En attendant l'implementation complete, le runtime peut utiliser une configuration statique.
-Mais le contrat doit rester compatible avec un vrai `AGENT_REGISTRY_CONTRACT.md`.
+Mais cette configuration doit respecter `AGENT_REGISTRY_CONTRACT.md`.
 
 ## 12. Task Graph Builder
 
