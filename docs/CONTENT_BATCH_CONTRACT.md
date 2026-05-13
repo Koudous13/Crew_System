@@ -798,6 +798,7 @@ Avant export :
 
 - score global minimum 8 ;
 - contenus sous 7 retires ou revises ;
+- les contenus intenses ne doivent pas etre adoucis si le risque est encadre ;
 - risques signales ;
 - fichiers ecrits ;
 - resume final pret.
@@ -827,6 +828,12 @@ Regles :
 - 8 a 9 : solide ;
 - 9 a 10 : prioritaire dans le batch.
 
+Regle d'intensite :
+
+- un `risk_score` eleve ne doit pas automatiquement faire baisser `emotional_power_score` ou `growth_potential_score` ;
+- une version offensive propre doit etre conservee si elle est vraie, prouvable et assumable ;
+- la revision doit viser le point de risque exact, pas lisser tout le contenu.
+
 Batch scoring :
 
 ```yaml
@@ -853,6 +860,13 @@ Le systeme doit detecter :
 - contenus sans tension ;
 - contenus sans raison d'exister.
 
+Le controle de banalites doit aussi detecter :
+
+- contenus trop lisses apres review ;
+- angles growth transformes en conseils sages ;
+- hooks psychologiques adoucis sans raison documentee ;
+- CTA rendus mous alors que la strategie demande l'action.
+
 ```yaml
 duplicate_control:
   similar_hook_threshold: float
@@ -872,7 +886,7 @@ Risques a verifier :
 - bad buzz possible ;
 - polarisation trop destructrice ;
 - confusion avec une publication officielle ;
-- CTA trop agressif ;
+- CTA trop agressif sans valeur ou non proportionne ;
 - contenu sensible ;
 - croissance obtenue par bruit plutot que valeur.
 

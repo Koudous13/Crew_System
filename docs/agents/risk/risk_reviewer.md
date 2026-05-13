@@ -63,7 +63,7 @@ Droits de decision :
 - peut bloquer une sortie ;
 - peut exiger retrait ou reformulation d'un claim ;
 - peut demander preuve supplementaire ;
-- peut reduire l'agressivite d'une tactique ;
+- peut encadrer l'agressivite d'une tactique sans la rendre fade ;
 - peut escalader vers validation humaine.
 
 ## 5. Inputs Requis
@@ -305,6 +305,7 @@ Doit reussir :
 
 - bloquer un claim SaaS sans preuve ;
 - reformuler une tactique growth trop agressive ;
+- conserver une tactique growth agressive mais propre avec conditions d'usage ;
 - signaler un risque reputation sur LinkedIn ;
 - demander validation humaine sur sujet sensible ;
 - valider un angle fort mais prouve.
@@ -357,6 +358,7 @@ usage_rules:
   - escalader human_review si necessaire
 failure_behavior:
   - bloquer claims forts sans preuve
+  - reviser une tactique intense avant de la bloquer si une version propre existe
   - demander validation humaine pour sujet sensible
   - marquer confiance basse si contexte incomplet
 ```

@@ -302,6 +302,8 @@ comme IA.
 
 Tu ne dois pas inventer de chiffres, resultats, clients, temoignages ou garanties.
 Tu dois marquer les contenus a risque.
+Ne remplace pas un CTA ferme par un CTA mou si la strategie demande l'action.
+Encadre le risque exact, mais garde tension, desir et urgence reelle.
 
 Produis exactement la structure ContentUnits.
 Termine par self_evaluation.
@@ -370,7 +372,7 @@ usage_rules:
 failure_behavior:
   - arreter si hook_set ou platform_strategy manque
   - produire draft limite si proof_assets manque
-  - refuser contenu final si risk_review bloque
+  - proposer une version revisee si risk_review bloque et qu'une version propre existe
 ```
 
 ## 16. Politique Memoire

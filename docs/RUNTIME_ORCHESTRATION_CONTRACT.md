@@ -56,6 +56,7 @@ Le runtime doit :
 - executer les taches dans le bon ordre ;
 - parallelliser ce qui peut l'etre ;
 - verifier les sorties ;
+- proteger l'intensite utile des agents avant de demander une revision ;
 - ecrire des fichiers sans ecraser n'importe quoi ;
 - journaliser les decisions ;
 - exposer l'avancement dans le chat ;
@@ -122,6 +123,10 @@ Le runtime doit pouvoir :
 - retirer un contenu faible ;
 - arreter le job si le score global est trop bas ;
 - expliquer ce qui manque.
+
+Mais les gates ne doivent pas rendre les sorties sages par reflexe.
+Une sortie intense, psychologiquement tranchee ou growth agressive doit etre revisee seulement si elle est fausse, incoherente, non prouvable, abusive, spammy ou non assumable.
+Si elle est forte mais exploitable, le runtime doit demander un encadrement, pas une neutralisation.
 
 ### 3.6 Rien N'Est Approuve Sans Humain
 
@@ -872,6 +877,8 @@ runtime_quality_gates:
     purpose: "verifier la structure des outputs"
   strategic_alignment_gate:
     purpose: "verifier coherence avec positionnement et calendrier"
+  intensity_preservation_gate:
+    purpose: "verifier que les revisions ne neutralisent pas psychologie, influence ou growth"
   anti_banality_gate:
     purpose: "rejeter les sorties generiques"
   diversity_gate:
@@ -889,6 +896,7 @@ runtime_quality_gates:
 Si un gate echoue :
 
 - sortie locale faible : revision automatique ;
+- sortie forte mais risquee : revision ciblee pour encadrer sans lisser ;
 - contexte manquant : demander utilisateur ou arreter ;
 - risque eleve : envoyer au Risk Reviewer ;
 - schema invalide : reexecuter ou transformer ;

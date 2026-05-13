@@ -107,7 +107,7 @@ Comportement si input manquant :
 - si platform_strategy manque, marquer les variantes plateforme comme hypotheses ;
 - si content_units manque, concevoir tests de niveau strategie ou hook ;
 - si performance manque, creer baseline a mesurer ;
-- si risk_review bloque une variante, la retirer.
+- si risk_review bloque une variante, tenter d'abord une version offensive propre avant retrait.
 
 ## 6. Contrat De Sortie
 
@@ -358,7 +358,7 @@ usage_rules:
 failure_behavior:
   - produire learning recommendations si tracking impossible
   - refuser test si variable non isolable
-  - retirer variante bloquee par risk_review
+  - reconstruire une variante bloquee par risk_review si une version propre reste possible
 ```
 
 ## 16. Politique Memoire

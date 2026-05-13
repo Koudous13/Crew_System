@@ -681,7 +681,7 @@ LinkedIn post rules :
 - phrases aerables ;
 - preuve ou logique solide ;
 - pas de posture creuse ;
-- pas de CTA agressif ;
+- pas de CTA agressif sans valeur ou sans rapport avec l'etape psychologique ;
 - pas de copie directe du post Facebook.
 
 ## 18. Hook Contract
@@ -1092,6 +1092,13 @@ Minimum scores :
 
 Si le global_score est sous 8, le pack doit etre itere.
 
+Regle d'arbitrage :
+
+- `emotional_power` et `growth_potential` ne doivent pas etre diminues pour rendre le pack plus sage ;
+- une strategie intense doit etre encadree, pas neutralisee ;
+- les revisions doivent distinguer risque reel, preuve manquante, incoherence et simple inconfort ;
+- le pack doit conserver la version offensive propre quand elle est vraie, defendable et coherente.
+
 ## 28. Risk Review
 
 Objectif :
@@ -1118,8 +1125,17 @@ Red flags :
 - critique injustifiee d'un concurrent ;
 - polarisation trop destructrice ;
 - manipulation par le faux ;
-- CTA agressif ;
+- CTA agressif sans valeur ou non proportionne ;
 - risque de bad buzz non maitrise.
+
+Ces red flags ne doivent pas bloquer :
+
+- provocation utile ;
+- tension psychologique vraie ;
+- growth hack propre ;
+- CTA ferme ;
+- contraste dur ;
+- manipulation de perception assumee et non mensongere.
 
 ## 29. Learning Loop
 
