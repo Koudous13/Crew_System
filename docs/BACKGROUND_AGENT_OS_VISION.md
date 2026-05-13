@@ -398,6 +398,8 @@ Le systeme doit utiliser les fichiers comme memoire durable.
 
 Chaque projet doit avoir une structure claire.
 
+Le contrat complet de cette memoire fichier est defini dans `PROJECT_FILE_SYSTEM_CONTRACT.md`.
+
 Structure recommandee :
 
 ```text

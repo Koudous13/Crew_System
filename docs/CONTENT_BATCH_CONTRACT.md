@@ -468,7 +468,7 @@ content_unit:
     novelty_score: int
     risk_score: int
   review:
-    status: draft | needs_revision | ready_for_human_review | rejected
+    status: draft | needs_revision | ready_for_human_review | approved_by_human | rejected | archived
     why_it_should_work: string
     weakest_point: string
     required_improvement: string

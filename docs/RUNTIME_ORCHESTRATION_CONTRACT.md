@@ -13,6 +13,8 @@ Les autres documents definissent :
 
 Ce fichier definit comment tout cela s'execute.
 
+La structure durable des dossiers, manifests, outputs, logs, archives et conventions de fichiers est definie dans `PROJECT_FILE_SYSTEM_CONTRACT.md`.
+
 Question centrale :
 
 > Comment une demande de chat devient-elle un job fiable qui lit les bons fichiers, lance les bons agents, produit les bons livrables, ecrit les bons fichiers et peut reprendre proprement ?
