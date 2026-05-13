@@ -500,6 +500,7 @@ class TaskNode(RuntimeModel):
     task_type: TaskType
     status: TaskStatus = TaskStatus.PENDING
     agent_id: str = ""
+    reason: str = ""
     depends_on: list[str] = field(default_factory=list)
     input_artifacts: list[str] = field(default_factory=list)
     output_artifacts: list[str] = field(default_factory=list)
