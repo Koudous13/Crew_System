@@ -1,5 +1,6 @@
 """Runtime orchestration package."""
 
+from crew_system.runtime.agent_executor import AgentExecutionError, AgentTaskExecutor
 from crew_system.runtime.context_loader import ContextLoader, ContextLoaderError, ContextSpec
 from crew_system.runtime.intent import RuleBasedIntentParser
 from crew_system.runtime.planner import AgentRouter, JobPlan, JobPlanner, PlannerError
@@ -12,6 +13,8 @@ from crew_system.runtime.request import RequestNormalizationError, RequestNormal
 
 __all__ = [
     "AgentRouter",
+    "AgentExecutionError",
+    "AgentTaskExecutor",
     "ContextLoader",
     "ContextLoaderError",
     "ContextSpec",
