@@ -1030,12 +1030,29 @@ Ce sont les raccourcis qui casseraient le systeme si on les prenait dans le mauv
 
 Avant chaque merge vers `dev` :
 
+- supposer que l'utilisateur demande explicitement : "verifie vraiment tout" ;
 - relire les fichiers modifies ;
 - lancer les tests disponibles ;
+- lancer les scenarios manuels pertinents quand la phase touche un flux critique ;
 - verifier `git diff --check` ;
+- verifier les scans d'hygiene disponibles ;
+- verifier les chemins dangereux, fichiers manquants et erreurs publiques quand la phase touche le filesystem ou le registre ;
 - verifier que le plan est respecte ;
 - verifier qu'aucune dette critique n'est cachee ;
+- corriger tout point faible trouve avant de demander validation ou de merger ;
 - noter clairement ce qui reste a faire.
+
+Cette verification est implicite.
+
+Cela veut dire :
+
+```text
+Meme si l'utilisateur ne le repete pas, chaque phase doit etre traitee comme si
+la consigne "reverifie encore proprement" venait d'etre donnee.
+```
+
+Le systeme ne doit pas avancer par confiance vague.
+Il doit avancer par verification repetee, corrections courtes, puis validation.
 
 ## 13. Prochaine Etape Apres Ce Fichier
 
