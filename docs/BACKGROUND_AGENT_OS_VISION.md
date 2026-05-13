@@ -174,6 +174,8 @@ Fonctions :
 - verifier les quality gates ;
 - ecrire les fichiers finaux.
 
+Le detail operationnel de cette couche est defini dans `RUNTIME_ORCHESTRATION_CONTRACT.md`.
+
 ### 4.3 Agent Network
 
 Role :
@@ -425,8 +427,12 @@ workspace/
         week_01_facebook_posts.md
         week_01_linkedin_posts.md
       logs/
+        jobs.jsonl
         agent_runs.jsonl
+        artifacts.jsonl
+        errors.jsonl
         decisions.md
+        jobs/
 ```
 
 Regles :
@@ -471,19 +477,27 @@ Le systeme doit comprendre :
 
 Comme le systeme travaille en arriere-plan, il doit exposer des etats.
 
-Etats recommandés :
+Etats recommandes :
 
 ```yaml
 job_status:
   queued
-  reading_context
-  planning
+  accepted
+  normalizing_request
+  resolving_project
+  clarifying_scope
+  loading_context
+  planning_job
+  building_task_graph
   running_agents
-  reviewing_outputs
+  validating_outputs
   writing_files
+  preparing_final_response
   completed
-  failed
   waiting_for_user
+  paused
+  failed
+  cancelled
 ```
 
 Le chat doit pouvoir dire :

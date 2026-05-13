@@ -282,7 +282,7 @@ metadata:
   version: string
   created_at: string
   owner: string
-  status: draft | ready_for_review | approved | rejected | archived
+  status: draft | needs_revision | ready_for_human_review | approved_by_human | rejected | archived
   platforms:
     - facebook
     - linkedin
@@ -294,7 +294,7 @@ Regles :
 
 - `campaign_id` doit etre stable.
 - `version` suit le format semver.
-- `status` ne doit jamais etre `approved` sans validation humaine.
+- `status` ne doit jamais etre `approved_by_human` sans validation humaine explicite.
 
 ## 7. Brief Summary
 
@@ -1395,7 +1395,7 @@ campaign_pack:
     campaign_id: "camp_001"
     campaign_name: "Votre communication explique trop"
     version: "0.1.0"
-    status: "ready_for_review"
+    status: "ready_for_human_review"
     platforms: ["facebook", "linkedin"]
 
   strategic_diagnosis:

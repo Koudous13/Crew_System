@@ -979,10 +979,14 @@ Regles :
 
 Un batch massif doit etre un job.
 
+Le lifecycle technique du job doit suivre `RUNTIME_ORCHESTRATION_CONTRACT.md`.
+
+Les phases metier specifiques a un Content Batch sont :
+
 ```yaml
-job_lifecycle:
-  queued
+batch_job_phases:
   loading_context
+  selecting_period
   planning_batch
   running_strategy_agents
   generating_content
@@ -991,9 +995,6 @@ job_lifecycle:
   reviewing_quality
   reviewing_risk
   writing_files
-  completed
-  failed
-  waiting_for_user
 ```
 
 Le chat doit pouvoir afficher :
