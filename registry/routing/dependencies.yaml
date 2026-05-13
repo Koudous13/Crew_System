@@ -1,0 +1,76 @@
+dependency_rules:
+  file_architect:
+    should_run_after:
+      - "intake_normalizer"
+  strategist:
+    should_run_after:
+      - "intake_normalizer"
+  audience_psychologist:
+    should_run_after:
+      - "strategist"
+  positioning_agent:
+    should_run_after:
+      - "audience_psychologist"
+  influence_architect:
+    should_run_after:
+      - "positioning_agent"
+  growth_hacker:
+    should_run_after:
+      - "influence_architect"
+  facebook_native_agent:
+    should_run_after:
+      - "influence_architect"
+  linkedin_native_agent:
+    should_run_after:
+      - "influence_architect"
+  calendar_architect:
+    should_run_after:
+      - "growth_hacker"
+      - "facebook_native_agent"
+      - "linkedin_native_agent"
+  hook_master:
+    should_run_after:
+      - "calendar_architect"
+      - "audience_psychologist"
+  copywriter:
+    should_run_after:
+      - "hook_master"
+      - "platform_agents"
+  creative_director:
+    should_run_after:
+      - "platform_agents"
+  video_agent:
+    should_run_after:
+      - "platform_agents"
+  experimentation_agent:
+    should_run_after:
+      - "growth_hacker"
+  anti_banality_agent:
+    should_run_after:
+      - "content_or_strategy_generated"
+  risk_reviewer:
+    should_run_after:
+      - "content_or_strategy_generated"
+  performance_analyst:
+    should_run_after:
+      - "performance_data_available"
+parallel_safe_groups:
+  -
+    - "facebook_native_agent"
+    - "linkedin_native_agent"
+  -
+    - "creative_director"
+    - "video_agent"
+  -
+    - "hook_master_by_angle_group"
+  -
+    - "copywriter_by_content_group"
+  -
+    - "anti_banality_agent"
+    - "risk_reviewer"
+conflict_policy:
+  same_section_owner: "un seul owner, autres contributeurs"
+  strategic_conflict: "strategist final arbitration while preserving clean intensity"
+  schema_conflict: "reject output and retry"
+  missing_context: "context loader or ask user"
+  version_conflict: "use registry active version"

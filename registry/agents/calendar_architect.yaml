@@ -1,0 +1,194 @@
+agent_registry_entry:
+  identity:
+    agent_id: "calendar_architect"
+    name: "Calendar Architect"
+    version: "0.1.0"
+    status: "draft"
+    type: "orchestrator"
+    owner_domain: "planning"
+  source:
+    blueprint_path: "docs/agents/planning/calendar_architect.md"
+    prompt_path: "registry/prompts/calendar_architect.system.txt"
+    schema_path: "registry/schemas/AnnualEditorialCalendar.schema.json"
+    eval_path: "registry/evals/calendar_architect.eval.yaml"
+    examples_path: ""
+    changelog_path: "docs/agents/planning/calendar_architect.md"
+  purpose:
+    mission: "Construire la sequence editoriale longue du projet : un calendrier annuel detaille, coherent, exploitable par plateforme et capable de guider des productions massives sans perdre la strategie."
+    primary_question: "Comment transformer la strategie, l'influence et le growth system en 12 mois de progression editoriale qui eduque, attire, rassure, provoque, convertit et apprend ?"
+    success_definition: "La sortie donne une architecture annuelle utilisable par le runtime. Chaque mois, semaine et plateforme sait quoi faire, pourquoi le faire, quel etat psychologique viser, quel mecanisme growth soutenir, quels actifs creer et comment mesurer le resultat. Le calendrier ne doit pas lisser la strategie. Il doit organiser des pics d'intensite : semaines de tension, semaines de preuve, semaines de desir, semaines growth, semaines controverse defendable et semaines conversion."
+  capabilities:
+    primary:
+      - "calendar_architecture"
+    secondary:
+      - "editorial_sequence_design"
+      - "intensity_planning"
+    forbidden:
+      - "direct_publishing"
+      - "fake_proof_generation"
+      - "fake_engagement_generation"
+  ownership:
+    owns_sections:
+      - "annual_editorial_calendar"
+      - "editorial_calendar"
+    contributes_to_sections:
+      - "content_batch_guidance"
+    does_not_own:
+      - "publication_directe"
+      - "validation_humaine_finale"
+  inputs:
+    required:
+      - "normalized_brief"
+      - "strategic_diagnosis"
+      - "audience_intelligence"
+      - "positioning"
+      - "influence_architecture"
+      - "growth_system"
+      - "platform_strategies"
+    optional:
+      - "visual_direction"
+      - "video_strategy"
+      - "performance_memory"
+      - "launch_dates"
+      - "seasonal_constraints"
+      - "business_constraints"
+      - "existing_assets"
+    context_requirements:
+      - "context_snapshot"
+      - "project_manifest_if_available"
+    missing_input_behavior:
+      - "mark_assumptions"
+      - "lower_confidence_score"
+      - "ask_user_if_blocking"
+  outputs:
+    produced_artifacts:
+      - "annual_editorial_calendar"
+    schema_name: "AnnualEditorialCalendar"
+    required_sections:
+      - "annual_editorial_calendar"
+    quality_fields:
+      - "quality_score"
+      - "confidence_score"
+      - "calendar_coherence_score"
+  routing:
+    required_for_intents:
+      - "generate_annual_calendar"
+      - "generate_content_batch"
+    optional_for_intents:
+      - "create_campaign_pack"
+      - "revise_content_batch"
+    required_for_platforms: []
+    required_when: []
+    activation_rules: []
+    skip_rules: []
+    fallback_agent_id: "strategist"
+  execution:
+    supported_modes:
+      - "draft"
+      - "deep_work"
+      - "revision"
+      - "critic"
+      - "benchmark"
+    default_mode: "deep_work"
+    max_iterations: 4
+    timeout_seconds: 240
+    max_tool_calls: 10
+    context_budget: "high"
+    cost_tier: "standard"
+    parallel_safe: false
+  tools:
+    allowed:
+      - "strategy_reader"
+      - "audience_intelligence_reader"
+      - "positioning_reader"
+      - "influence_architecture_reader"
+      - "growth_system_reader"
+      - "platform_strategy_reader"
+      - "performance_memory_reader"
+      - "calendar_version_reader"
+    forbidden:
+      - "publisher_api"
+      - "direct_file_overwriter_without_versioning"
+    usage_rules:
+      - "follow_agent_blueprint"
+      - "do_not_write_final_files_directly"
+      - "do_not_publish_directly"
+  memory:
+    reads:
+      - "brand_memory"
+      - "audience_memory"
+      - "decision_memory"
+      - "calendar_memory"
+      - "performance_memory"
+    writes:
+      - "annual_calendar_candidate"
+      - "calendar_decision"
+      - "content_cadence_rule"
+      - "asset_need_signal"
+    never_store:
+      - "unverified_claims_as_facts"
+      - "personal_sensitive_data"
+  dependencies:
+    requires_before: []
+    should_run_after:
+      - "growth_hacker"
+      - "facebook_native_agent"
+      - "linkedin_native_agent"
+    can_run_parallel_with:
+      - "creative_director"
+    conflicts_with: []
+  quality:
+    minimum_quality_score: 8
+    minimum_confidence_score: 7
+    rejection_conditions:
+      - "output_schema_invalid"
+      - "handoff_unusable"
+      - "fake_proof_or_fake_signal"
+    review_agent_id: "anti_banality_agent"
+  guardrails:
+    global:
+      - "no_fake_proof"
+      - "no_fake_numbers"
+      - "no_fake_testimonials"
+      - "no_spam"
+      - "no_direct_publishing"
+      - "preserve_clean_intensity"
+    domain_specific:
+      - "respect_source_spec"
+      - "mark_hypotheses"
+      - "preserve_offensive_clean_version_when_valid"
+    red_flags:
+      - "unsupported_claims"
+      - "sensitive_personal_data"
+      - "platform_abuse"
+      - "over_sanitized_output"
+  observability:
+    trace_fields:
+      - "agent_id"
+      - "version"
+      - "job_id"
+      - "project_slug"
+      - "calendar_id"
+      - "quality_score"
+      - "confidence_score"
+      - "calendar_coherence_score"
+      - "platform_specificity_score"
+      - "growth_alignment_score"
+    metrics:
+      - "weeks_generated"
+      - "platform_split_completeness"
+      - "asset_needs_count"
+      - "video_weeks_count"
+      - "revision_count"
+      - "weeks_changed_after_performance_review"
+  versioning:
+    current: "0.1.0"
+    compatible_output_versions:
+      - "AnnualEditorialCalendar.v0"
+    deprecated_by: ""
+    changelog:
+      -
+        version: "0.1.0"
+        date: "2026-05-13"
+        changes:
+          - "registry_entry_created_from_human_spec"

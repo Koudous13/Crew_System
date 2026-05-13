@@ -1,0 +1,177 @@
+agent_registry_entry:
+  identity:
+    agent_id: "strategist"
+    name: "Strategist"
+    version: "0.1.0"
+    status: "draft"
+    type: "strategist"
+    owner_domain: "strategy"
+  source:
+    blueprint_path: "docs/agents/core/strategist.md"
+    prompt_path: "registry/prompts/strategist.system.txt"
+    schema_path: "registry/schemas/StrategicDiagnosis.schema.json"
+    eval_path: "registry/evals/strategist.eval.yaml"
+    examples_path: ""
+    changelog_path: "docs/agents/core/strategist.md"
+  purpose:
+    mission: "Identifier le vrai probleme strategique de communication, definir la direction centrale de campagne et arbitrer les contradictions entre agents."
+    primary_question: "Quelle perception doit changer pour que l'audience voie l'offre comme evidente, desirable et assez urgente pour agir ?"
+    success_definition: "La sortie donne au systeme un diagnostic strategique fort, une perception a changer claire, une big idea et une logique de decision utilisable par les agents suivants. Quand il arbitre, cet agent doit proteger la puissance du systeme. Son role n'est pas de rendre les travaux psychologie, influence ou growth plus sages par reflexe. Il doit conserver la version la plus forte possible tant qu'elle reste vraie, coherente, assumable et exploitable."
+  capabilities:
+    primary:
+      - "strategic_diagnosis"
+      - "final_arbitration"
+    secondary:
+      - "big_idea_design"
+      - "intensity_preservation"
+    forbidden:
+      - "direct_publishing"
+      - "fake_proof_generation"
+      - "fake_engagement_generation"
+  ownership:
+    owns_sections:
+      - "strategic_diagnosis"
+      - "big_idea"
+      - "final_recommendation"
+    contributes_to_sections:
+      - "campaign_pack"
+    does_not_own:
+      - "publication_directe"
+      - "validation_humaine_finale"
+  inputs:
+    required:
+      - "normalized_brief"
+    optional:
+      - "audience_intelligence"
+      - "positioning"
+      - "performance_data"
+      - "competitor_notes"
+      - "previous_strategy_docs"
+    context_requirements:
+      - "context_snapshot"
+      - "project_manifest_if_available"
+    missing_input_behavior:
+      - "mark_assumptions"
+      - "lower_confidence_score"
+      - "ask_user_if_blocking"
+  outputs:
+    produced_artifacts:
+      - "strategic_diagnosis"
+    schema_name: "StrategicDiagnosis"
+    required_sections:
+      - "strategic_diagnosis"
+    quality_fields:
+      - "quality_score"
+      - "confidence_score"
+      - "novelty_score"
+  routing:
+    required_for_intents:
+      - "create_campaign_pack"
+      - "generate_content_batch"
+      - "revise_content_batch"
+      - "analyze_performance"
+    optional_for_intents:
+      - "answer_project_question"
+    required_for_platforms: []
+    required_when: []
+    activation_rules: []
+    skip_rules: []
+    fallback_agent_id: ""
+  execution:
+    supported_modes:
+      - "draft"
+      - "deep_work"
+      - "critic"
+      - "revision"
+      - "benchmark"
+    default_mode: "deep_work"
+    max_iterations: 3
+    timeout_seconds: 150
+    max_tool_calls: 6
+    context_budget: "high"
+    cost_tier: "standard"
+    parallel_safe: false
+  tools:
+    allowed:
+      - "project_strategy_reader"
+      - "brief_reader"
+      - "performance_report_reader"
+      - "competitor_notes_reader"
+    forbidden:
+      - "file_writer"
+      - "publisher_api"
+      - "fake_proof_generator"
+    usage_rules:
+      - "follow_agent_blueprint"
+      - "do_not_write_final_files_directly"
+      - "do_not_publish_directly"
+  memory:
+    reads:
+      - "brand_memory"
+      - "audience_memory"
+      - "performance_memory"
+      - "decision_memory"
+    writes:
+      - "strategic_decision_candidate"
+      - "big_idea_candidate"
+      - "intensity_preservation_rule"
+      - "proof_gap_candidate"
+    never_store:
+      - "unverified_claims_as_facts"
+      - "sensitive_personal_data"
+  dependencies:
+    requires_before: []
+    should_run_after:
+      - "intake_normalizer"
+    can_run_parallel_with: []
+    conflicts_with: []
+  quality:
+    minimum_quality_score: 8
+    minimum_confidence_score: 7
+    rejection_conditions:
+      - "output_schema_invalid"
+      - "handoff_unusable"
+      - "fake_proof_or_fake_signal"
+    review_agent_id: "anti_banality_agent"
+  guardrails:
+    global:
+      - "no_fake_proof"
+      - "no_fake_numbers"
+      - "no_fake_testimonials"
+      - "no_spam"
+      - "no_direct_publishing"
+      - "preserve_clean_intensity"
+    domain_specific:
+      - "respect_source_spec"
+      - "mark_hypotheses"
+      - "preserve_offensive_clean_version_when_valid"
+    red_flags:
+      - "unsupported_claims"
+      - "sensitive_personal_data"
+      - "platform_abuse"
+      - "over_sanitized_output"
+  observability:
+    trace_fields:
+      - "agent_id"
+      - "version"
+      - "job_id"
+      - "project_slug"
+      - "quality_score"
+      - "confidence_score"
+      - "novelty_score"
+      - "proof_gap_count"
+    metrics:
+      - "strategic_rework_rate"
+      - "big_idea_acceptance_rate"
+      - "arbitration_count"
+  versioning:
+    current: "0.1.0"
+    compatible_output_versions:
+      - "StrategicDiagnosis.v0"
+    deprecated_by: ""
+    changelog:
+      -
+        version: "0.1.0"
+        date: "2026-05-13"
+        changes:
+          - "registry_entry_created_from_human_spec"

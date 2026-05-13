@@ -1,0 +1,185 @@
+agent_registry_entry:
+  identity:
+    agent_id: "performance_analyst"
+    name: "Performance Analyst"
+    version: "0.1.0"
+    status: "draft"
+    type: "analyst"
+    owner_domain: "analysis"
+  source:
+    blueprint_path: "docs/agents/analysis/performance_analyst.md"
+    prompt_path: "registry/prompts/performance_analyst.system.txt"
+    schema_path: "registry/schemas/PerformanceReport.schema.json"
+    eval_path: "registry/evals/performance_analyst.eval.yaml"
+    examples_path: ""
+    changelog_path: "docs/agents/analysis/performance_analyst.md"
+  purpose:
+    mission: "Interpreter les resultats, distinguer signal et bruit, produire des apprentissages utiles et nourrir la prochaine iteration strategie, contenu, calendrier, growth et experimentation."
+    primary_question: "Qu'avons-nous vraiment appris des resultats, et quelle decision concrete doit changer dans le systeme ?"
+    success_definition: "La sortie donne un rapport de performance actionnable : metriques, signaux, limites, hypotheses confirmees ou infirmees, apprentissages, recommandations, memoire a mettre a jour et prochains tests."
+  capabilities:
+    primary:
+      - "performance_analysis"
+    secondary:
+      - "learning_loop"
+      - "agent_feedback"
+    forbidden:
+      - "direct_publishing"
+      - "fake_proof_generation"
+      - "fake_engagement_generation"
+  ownership:
+    owns_sections:
+      - "performance_report"
+      - "learning_loop"
+    contributes_to_sections:
+      - "growth_system"
+      - "calendar_revision"
+    does_not_own:
+      - "publication_directe"
+      - "validation_humaine_finale"
+  inputs:
+    required:
+      - "performance_data"
+      - "artifact_reference"
+      - "campaign_context"
+    optional:
+      - "experimentation_plan"
+      - "content_batch"
+      - "platform_strategy"
+      - "growth_system"
+      - "annual_editorial_calendar"
+      - "previous_performance_memory"
+      - "risk_review"
+      - "quality_review"
+    context_requirements:
+      - "context_snapshot"
+      - "project_manifest_if_available"
+    missing_input_behavior:
+      - "mark_assumptions"
+      - "lower_confidence_score"
+      - "ask_user_if_blocking"
+  outputs:
+    produced_artifacts:
+      - "performance_report"
+    schema_name: "PerformanceReport"
+    required_sections:
+      - "performance_report"
+    quality_fields:
+      - "quality_score"
+      - "confidence_score"
+      - "insight_quality_score"
+  routing:
+    required_for_intents:
+      - "analyze_performance"
+    optional_for_intents:
+      - "revise_content_batch"
+      - "generate_annual_calendar"
+    required_for_platforms: []
+    required_when: []
+    activation_rules: []
+    skip_rules:
+      - "no performance data available"
+    fallback_agent_id: ""
+  execution:
+    supported_modes:
+      - "analysis"
+      - "deep_work"
+      - "revision"
+      - "benchmark"
+    default_mode: "analysis"
+    max_iterations: 3
+    timeout_seconds: 180
+    max_tool_calls: 10
+    context_budget: "high"
+    cost_tier: "standard"
+    parallel_safe: false
+  tools:
+    allowed:
+      - "performance_data_reader"
+      - "artifact_reader"
+      - "experimentation_plan_reader"
+      - "content_batch_reader"
+      - "platform_strategy_reader"
+      - "growth_system_reader"
+      - "calendar_reader"
+      - "performance_memory_reader"
+    forbidden:
+      - "publisher_api"
+      - "data_fabrication_tool"
+    usage_rules:
+      - "follow_agent_blueprint"
+      - "do_not_write_final_files_directly"
+      - "do_not_publish_directly"
+  memory:
+    reads:
+      - "performance_memory"
+      - "decision_memory"
+      - "platform_memory"
+    writes:
+      - "performance_learning_candidate"
+      - "metric_interpretation"
+      - "memory_update_recommendation"
+    never_store:
+      - "sensitive_personal_data"
+      - "unverified_claims_as_facts"
+      - "raw_private_data"
+  dependencies:
+    requires_before: []
+    should_run_after:
+      - "performance_data_available"
+    can_run_parallel_with:
+      - "risk_reviewer"
+      - "anti_banality_agent"
+    conflicts_with: []
+  quality:
+    minimum_quality_score: 8
+    minimum_confidence_score: 7
+    rejection_conditions:
+      - "output_schema_invalid"
+      - "handoff_unusable"
+      - "fake_proof_or_fake_signal"
+    review_agent_id: "strategist"
+  guardrails:
+    global:
+      - "no_fake_proof"
+      - "no_fake_numbers"
+      - "no_fake_testimonials"
+      - "no_spam"
+      - "no_direct_publishing"
+      - "preserve_clean_intensity"
+    domain_specific:
+      - "respect_source_spec"
+      - "mark_hypotheses"
+      - "preserve_offensive_clean_version_when_valid"
+    red_flags:
+      - "unsupported_claims"
+      - "sensitive_personal_data"
+      - "platform_abuse"
+      - "over_sanitized_output"
+  observability:
+    trace_fields:
+      - "agent_id"
+      - "version"
+      - "job_id"
+      - "project_slug"
+      - "report_id"
+      - "confidence_score"
+      - "data_sufficiency_score"
+      - "insight_quality_score"
+    metrics:
+      - "reports_generated"
+      - "inconclusive_rate"
+      - "memory_updates_recommended"
+      - "next_tests_recommended"
+      - "low_confidence_analysis_count"
+  versioning:
+    current: "0.1.0"
+    compatible_output_versions:
+      - "PerformanceReport.v0"
+    deprecated_by: ""
+    changelog:
+      -
+        version: "0.1.0"
+        date: "2026-05-13"
+        changes:
+          - "registry_entry_created_from_human_spec"

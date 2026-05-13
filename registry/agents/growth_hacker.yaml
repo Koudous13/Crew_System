@@ -1,0 +1,198 @@
+agent_registry_entry:
+  identity:
+    agent_id: "growth_hacker"
+    name: "Growth Hacker"
+    version: "0.1.0"
+    status: "draft"
+    type: "optimizer"
+    owner_domain: "growth"
+  source:
+    blueprint_path: "docs/agents/growth/growth_hacker.md"
+    prompt_path: "registry/prompts/growth_hacker.system.txt"
+    schema_path: "registry/schemas/GrowthSystem.schema.json"
+    eval_path: "registry/evals/growth_hacker.eval.yaml"
+    examples_path: ""
+    changelog_path: "docs/agents/growth/growth_hacker.md"
+  purpose:
+    mission: "Construire le systeme de croissance de la campagne : les boucles, experiences, leviers d'amplification, mecanismes de conversation, chemins d'acquisition et criteres de mesure qui transforment une strategie forte en dynamique de marche."
+    primary_question: "Comment faire circuler l'idee plus vite, declencher plus d'interactions utiles, convertir l'attention en relation, puis recycler chaque signal en avantage durable ?"
+    success_definition: "La sortie donne au systeme un plan growth actionnable, mesurable et defendable. Elle ne doit pas seulement proposer des \"hacks\". Elle doit designer des boucles qui peuvent se repeter, apprendre, s'ameliorer et nourrir les agents contenu, calendrier, plateforme et experimentation. Elle doit chercher l'avantage asymetrique : tactiques non conventionnelles, detournement propre des usages plateforme, boucles de conversation, actifs partageables, signaux sociaux, distribution communautaire, offres d'entree et recyclage malin."
+  capabilities:
+    primary:
+      - "growth_loop_design"
+    secondary:
+      - "conversion_path_design"
+      - "experimentation_design"
+    forbidden:
+      - "direct_publishing"
+      - "fake_proof_generation"
+      - "fake_engagement_generation"
+  ownership:
+    owns_sections:
+      - "growth_system"
+      - "growth_integration"
+      - "experimentation_plan"
+    contributes_to_sections:
+      - "calendar"
+      - "content_batch"
+    does_not_own:
+      - "publication_directe"
+      - "validation_humaine_finale"
+  inputs:
+    required:
+      - "normalized_brief"
+      - "strategic_diagnosis"
+      - "audience_intelligence"
+      - "positioning"
+      - "influence_architecture"
+    optional:
+      - "platform_strategy_facebook"
+      - "platform_strategy_linkedin"
+      - "annual_editorial_calendar"
+      - "proof_assets"
+      - "existing_assets"
+      - "performance_memory"
+      - "business_constraints"
+    context_requirements:
+      - "context_snapshot"
+      - "project_manifest_if_available"
+    missing_input_behavior:
+      - "mark_assumptions"
+      - "lower_confidence_score"
+      - "ask_user_if_blocking"
+  outputs:
+    produced_artifacts:
+      - "growth_system"
+    schema_name: "GrowthSystem"
+    required_sections:
+      - "growth_system"
+    quality_fields:
+      - "quality_score"
+      - "confidence_score"
+      - "growth_loop_clarity_score"
+  routing:
+    required_for_intents:
+      - "create_campaign_pack"
+    optional_for_intents:
+      - "generate_content_batch"
+      - "analyze_performance"
+    required_for_platforms: []
+    required_when: []
+    activation_rules:
+      - "growth_mechanism required"
+      - "batch_goal includes comments"
+      - "batch_goal includes leads"
+      - "user asks for hacks or growth loops"
+    skip_rules:
+      - "pure formatting revision"
+      - "no growth mechanism needed"
+    fallback_agent_id: "strategist"
+  execution:
+    supported_modes:
+      - "draft"
+      - "deep_work"
+      - "critic"
+      - "revision"
+      - "benchmark"
+    default_mode: "deep_work"
+    max_iterations: 3
+    timeout_seconds: 180
+    max_tool_calls: 8
+    context_budget: "high"
+    cost_tier: "standard"
+    parallel_safe: false
+  tools:
+    allowed:
+      - "strategy_reader"
+      - "audience_intelligence_reader"
+      - "positioning_reader"
+      - "influence_architecture_reader"
+      - "platform_strategy_reader"
+      - "performance_memory_reader"
+      - "proof_asset_reader"
+    forbidden:
+      - "publisher_api"
+      - "fake_engagement_generator"
+      - "fake_account_generator"
+      - "spam_automation_tool"
+    usage_rules:
+      - "follow_agent_blueprint"
+      - "do_not_write_final_files_directly"
+      - "do_not_publish_directly"
+  memory:
+    reads:
+      - "brand_memory"
+      - "audience_memory"
+      - "decision_memory"
+      - "performance_memory"
+    writes:
+      - "growth_loop_candidate"
+      - "experiment_candidate"
+      - "conversion_signal_definition"
+      - "risk_note_candidate"
+    never_store:
+      - "sensitive_personal_data"
+      - "unverified_claims_as_facts"
+      - "fake_social_proof"
+  dependencies:
+    requires_before: []
+    should_run_after:
+      - "influence_architect"
+    can_run_parallel_with:
+      - "facebook_native_agent"
+      - "linkedin_native_agent"
+    conflicts_with: []
+  quality:
+    minimum_quality_score: 8
+    minimum_confidence_score: 7
+    rejection_conditions:
+      - "output_schema_invalid"
+      - "handoff_unusable"
+      - "fake_proof_or_fake_signal"
+    review_agent_id: "risk_reviewer"
+  guardrails:
+    global:
+      - "no_fake_proof"
+      - "no_fake_numbers"
+      - "no_fake_testimonials"
+      - "no_spam"
+      - "no_direct_publishing"
+      - "preserve_clean_intensity"
+    domain_specific:
+      - "respect_source_spec"
+      - "mark_hypotheses"
+      - "preserve_offensive_clean_version_when_valid"
+    red_flags:
+      - "unsupported_claims"
+      - "sensitive_personal_data"
+      - "platform_abuse"
+      - "over_sanitized_output"
+  observability:
+    trace_fields:
+      - "agent_id"
+      - "version"
+      - "job_id"
+      - "project_slug"
+      - "quality_score"
+      - "confidence_score"
+      - "growth_loop_clarity_score"
+      - "measurability_score"
+      - "risk_control_score"
+    metrics:
+      - "growth_tactics_count"
+      - "experiment_count"
+      - "tactics_rejected_for_risk"
+      - "tactics_without_proof_gap"
+      - "conversion_paths_created"
+      - "performance_reuse_rate"
+  versioning:
+    current: "0.1.0"
+    compatible_output_versions:
+      - "GrowthSystem.v0"
+    deprecated_by: ""
+    changelog:
+      -
+        version: "0.1.0"
+        date: "2026-05-13"
+        changes:
+          - "registry_entry_created_from_human_spec"

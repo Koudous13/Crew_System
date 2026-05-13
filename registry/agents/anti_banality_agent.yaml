@@ -1,0 +1,185 @@
+agent_registry_entry:
+  identity:
+    agent_id: "anti_banality_agent"
+    name: "Anti Banality Agent"
+    version: "0.1.0"
+    status: "draft"
+    type: "critic"
+    owner_domain: "quality"
+  source:
+    blueprint_path: "docs/agents/quality/anti_banality_agent.md"
+    prompt_path: "registry/prompts/anti_banality_agent.system.txt"
+    schema_path: "registry/schemas/QualityReview.schema.json"
+    eval_path: "registry/evals/anti_banality_agent.eval.yaml"
+    examples_path: ""
+    changelog_path: "docs/agents/quality/anti_banality_agent.md"
+  purpose:
+    mission: "Rejeter, diagnostiquer et ameliorer les strategies ou contenus faibles, generiques, interchangeables, trop IA, trop corporate ou insuffisamment specifiques."
+    primary_question: "Est-ce que cette sortie merite vraiment d'exister, ou est-ce seulement une production correcte mais oubliable ?"
+    success_definition: "La sortie force le systeme a elever le niveau. Elle identifie ce qui est banal, pourquoi, comment le corriger, quels elements doivent etre reecrits et si la sortie peut passer ou doit retourner aux agents precedents. Elle doit proteger l'intensite. Un contenu audacieux, polarise ou psychologiquement tranchant ne doit pas etre lisse s'il reste vrai, utile et coherent avec la strategie."
+  capabilities:
+    primary:
+      - "anti_banality_review"
+    secondary:
+      - "quality_review"
+      - "over_sanitization_detection"
+    forbidden:
+      - "direct_publishing"
+      - "fake_proof_generation"
+      - "fake_engagement_generation"
+  ownership:
+    owns_sections:
+      - "quality_review"
+      - "required_improvements"
+    contributes_to_sections:
+      - "final_readiness"
+    does_not_own:
+      - "publication_directe"
+      - "validation_humaine_finale"
+  inputs:
+    required:
+      - "artifact_to_review"
+      - "strategic_diagnosis"
+      - "audience_intelligence"
+      - "positioning"
+    optional:
+      - "influence_architecture"
+      - "platform_strategy"
+      - "calendar_context"
+      - "hook_set"
+      - "content_units"
+      - "creative_direction"
+      - "video_plan"
+      - "risk_review"
+      - "performance_memory"
+    context_requirements:
+      - "context_snapshot"
+      - "project_manifest_if_available"
+    missing_input_behavior:
+      - "mark_assumptions"
+      - "lower_confidence_score"
+      - "ask_user_if_blocking"
+  outputs:
+    produced_artifacts:
+      - "quality_review"
+    schema_name: "QualityReview"
+    required_sections:
+      - "quality_review"
+    quality_fields:
+      - "quality_score"
+      - "confidence_score"
+      - "critique_precision_score"
+  routing:
+    required_for_intents:
+      - "create_campaign_pack"
+      - "generate_content_batch"
+    optional_for_intents:
+      - "generate_annual_calendar"
+      - "generate_video_batch"
+    required_for_platforms: []
+    required_when: []
+    activation_rules:
+      - "artifact intended for final delivery"
+      - "batch or campaign pack needs final quality gate"
+    skip_rules: []
+    fallback_agent_id: "strategist"
+  execution:
+    supported_modes:
+      - "critic"
+      - "revision"
+      - "benchmark"
+      - "final_gate"
+    default_mode: "critic"
+    max_iterations: 2
+    timeout_seconds: 150
+    max_tool_calls: 8
+    context_budget: "high"
+    cost_tier: "standard"
+    parallel_safe: true
+  tools:
+    allowed:
+      - "artifact_reader"
+      - "strategy_reader"
+      - "audience_intelligence_reader"
+      - "positioning_reader"
+      - "platform_strategy_reader"
+      - "performance_memory_reader"
+    forbidden:
+      - "publisher_api"
+      - "final_file_writer"
+    usage_rules:
+      - "follow_agent_blueprint"
+      - "do_not_write_final_files_directly"
+      - "do_not_publish_directly"
+  memory:
+    reads:
+      - "brand_memory"
+      - "audience_memory"
+      - "performance_memory"
+    writes:
+      - "quality_issue_pattern"
+      - "banned_generic_phrase"
+      - "improvement_instruction"
+    never_store:
+      - "sensitive_personal_data"
+      - "unverified_claims_as_facts"
+  dependencies:
+    requires_before: []
+    should_run_after:
+      - "content_or_strategy_generated"
+    can_run_parallel_with:
+      - "risk_reviewer"
+    conflicts_with: []
+  quality:
+    minimum_quality_score: 8
+    minimum_confidence_score: 7
+    rejection_conditions:
+      - "output_schema_invalid"
+      - "handoff_unusable"
+      - "fake_proof_or_fake_signal"
+    review_agent_id: ""
+  guardrails:
+    global:
+      - "no_fake_proof"
+      - "no_fake_numbers"
+      - "no_fake_testimonials"
+      - "no_spam"
+      - "no_direct_publishing"
+      - "preserve_clean_intensity"
+    domain_specific:
+      - "respect_source_spec"
+      - "mark_hypotheses"
+      - "preserve_offensive_clean_version_when_valid"
+    red_flags:
+      - "unsupported_claims"
+      - "sensitive_personal_data"
+      - "platform_abuse"
+      - "over_sanitized_output"
+  observability:
+    trace_fields:
+      - "agent_id"
+      - "version"
+      - "job_id"
+      - "project_slug"
+      - "artifact_id"
+      - "decision"
+      - "specificity_score"
+      - "originality_score"
+      - "human_quality_score"
+    metrics:
+      - "reviews_count"
+      - "fail_rate"
+      - "revise_rate"
+      - "repeated_banality_patterns"
+      - "average_human_quality_score"
+  versioning:
+    current: "0.1.0"
+    compatible_output_versions:
+      - "QualityReview.v0"
+    deprecated_by: ""
+    changelog:
+      -
+        version: "0.1.0"
+        date: "2026-05-13"
+        changes:
+          - "registry_entry_created_from_human_spec"

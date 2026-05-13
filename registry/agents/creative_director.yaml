@@ -1,0 +1,196 @@
+agent_registry_entry:
+  identity:
+    agent_id: "creative_director"
+    name: "Creative Director"
+    version: "0.1.0"
+    status: "draft"
+    type: "creator"
+    owner_domain: "creative"
+  source:
+    blueprint_path: "docs/agents/creative/creative_director.md"
+    prompt_path: "registry/prompts/creative_director.system.txt"
+    schema_path: "registry/schemas/CreativeDirection.schema.json"
+    eval_path: "registry/evals/creative_director.eval.yaml"
+    examples_path: ""
+    changelog_path: "docs/agents/creative/creative_director.md"
+  purpose:
+    mission: "Decider si un visuel sert vraiment la strategie, puis concevoir la direction creative, les concepts visuels, les carrousels et les briefs d'assets necessaires."
+    primary_question: "Quel visuel rend le message plus clair, plus memorable ou plus convaincant, et quand faut-il refuser un visuel decoratif qui affaiblit le contenu ?"
+    success_definition: "La sortie donne aux agents contenu et video des decisions visuelles propres : quand utiliser un visuel, pourquoi, quel concept, quelle structure, quel texte, quelle preuve, quel format et quels risques."
+  capabilities:
+    primary:
+      - "creative_direction"
+    secondary:
+      - "visual_brief_design"
+      - "carousel_concept_design"
+    forbidden:
+      - "direct_publishing"
+      - "fake_proof_generation"
+      - "fake_engagement_generation"
+  ownership:
+    owns_sections:
+      - "visual_direction"
+      - "visual_briefs"
+      - "carousel_concepts"
+    contributes_to_sections:
+      - "content_batch"
+      - "video_plan"
+    does_not_own:
+      - "publication_directe"
+      - "validation_humaine_finale"
+  inputs:
+    required:
+      - "strategic_diagnosis"
+      - "audience_intelligence"
+      - "positioning"
+      - "influence_architecture"
+      - "platform_strategy"
+    optional:
+      - "growth_system"
+      - "annual_editorial_calendar"
+      - "content_units"
+      - "hook_set"
+      - "video_strategy"
+      - "proof_assets"
+      - "brand_assets"
+      - "performance_memory"
+    context_requirements:
+      - "context_snapshot"
+      - "project_manifest_if_available"
+    missing_input_behavior:
+      - "mark_assumptions"
+      - "lower_confidence_score"
+      - "ask_user_if_blocking"
+  outputs:
+    produced_artifacts:
+      - "creative_direction"
+    schema_name: "CreativeDirection"
+    required_sections:
+      - "creative_direction"
+    quality_fields:
+      - "quality_score"
+      - "confidence_score"
+      - "visual_clarity_score"
+  routing:
+    required_for_intents: []
+    optional_for_intents:
+      - "create_campaign_pack"
+      - "generate_content_batch"
+      - "generate_visual_batch"
+    required_for_platforms: []
+    required_when: []
+    activation_rules:
+      - "visual_policy != none"
+      - "content_format includes carousel"
+      - "visual_needed is true"
+      - "user requested images or carousels"
+    skip_rules:
+      - "visual_policy == none"
+      - "text_only batch confirmed"
+    fallback_agent_id: ""
+  execution:
+    supported_modes:
+      - "draft"
+      - "deep_work"
+      - "revision"
+      - "critic"
+      - "batch"
+    default_mode: "deep_work"
+    max_iterations: 3
+    timeout_seconds: 180
+    max_tool_calls: 8
+    context_budget: "high"
+    cost_tier: "standard"
+    parallel_safe: true
+  tools:
+    allowed:
+      - "strategy_reader"
+      - "audience_intelligence_reader"
+      - "positioning_reader"
+      - "influence_architecture_reader"
+      - "platform_strategy_reader"
+      - "calendar_reader"
+      - "content_unit_reader"
+      - "brand_asset_reader"
+      - "proof_asset_reader"
+    forbidden:
+      - "publisher_api"
+      - "fake_logo_generator"
+      - "fake_screenshot_generator"
+    usage_rules:
+      - "follow_agent_blueprint"
+      - "do_not_write_final_files_directly"
+      - "do_not_publish_directly"
+  memory:
+    reads:
+      - "brand_memory"
+      - "platform_memory"
+      - "performance_memory"
+    writes:
+      - "visual_rule_candidate"
+      - "visual_brief_candidate"
+      - "carousel_pattern_candidate"
+    never_store:
+      - "unverified_claims_as_facts"
+      - "fake_brand_assets"
+      - "sensitive_personal_data"
+  dependencies:
+    requires_before: []
+    should_run_after:
+      - "platform_agents"
+    can_run_parallel_with:
+      - "video_agent"
+      - "copywriter"
+    conflicts_with: []
+  quality:
+    minimum_quality_score: 8
+    minimum_confidence_score: 7
+    rejection_conditions:
+      - "output_schema_invalid"
+      - "handoff_unusable"
+      - "fake_proof_or_fake_signal"
+    review_agent_id: "anti_banality_agent"
+  guardrails:
+    global:
+      - "no_fake_proof"
+      - "no_fake_numbers"
+      - "no_fake_testimonials"
+      - "no_spam"
+      - "no_direct_publishing"
+      - "preserve_clean_intensity"
+    domain_specific:
+      - "respect_source_spec"
+      - "mark_hypotheses"
+      - "preserve_offensive_clean_version_when_valid"
+    red_flags:
+      - "unsupported_claims"
+      - "sensitive_personal_data"
+      - "platform_abuse"
+      - "over_sanitized_output"
+  observability:
+    trace_fields:
+      - "agent_id"
+      - "version"
+      - "job_id"
+      - "project_slug"
+      - "visual_briefs_count"
+      - "quality_score"
+      - "strategic_usefulness_score"
+      - "feasibility_score"
+    metrics:
+      - "visual_required_count"
+      - "visual_refused_count"
+      - "carousel_concepts_count"
+      - "briefs_flagged_for_risk"
+      - "asset_gap_count"
+  versioning:
+    current: "0.1.0"
+    compatible_output_versions:
+      - "CreativeDirection.v0"
+    deprecated_by: ""
+    changelog:
+      -
+        version: "0.1.0"
+        date: "2026-05-13"
+        changes:
+          - "registry_entry_created_from_human_spec"

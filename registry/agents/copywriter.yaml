@@ -1,0 +1,192 @@
+agent_registry_entry:
+  identity:
+    agent_id: "copywriter"
+    name: "Copywriter"
+    version: "0.1.0"
+    status: "draft"
+    type: "creator"
+    owner_domain: "content"
+  source:
+    blueprint_path: "docs/agents/content/copywriter.md"
+    prompt_path: "registry/prompts/copywriter.system.txt"
+    schema_path: "registry/schemas/ContentUnits.schema.json"
+    eval_path: "registry/evals/copywriter.eval.yaml"
+    examples_path: ""
+    changelog_path: "docs/agents/content/copywriter.md"
+  purpose:
+    mission: "Rediger les contenus finaux selon la strategie, la plateforme, le calendrier, les hooks, les preuves disponibles et les objectifs growth."
+    primary_question: "Comment transformer toutes les decisions strategiques en contenu lisible, persuasif, specifique et publiable, sans perdre la voix, la preuve ni l'intention ?"
+    success_definition: "La sortie donne un ou plusieurs contenus complets, propres, classes, exploitables par fichier, avec justification, CTA, besoins visuels/video et auto-evaluation. Le contenu doit pouvoir etre intense : direct, desireux, contrariant, emotionnel, memorisable et pousse vers l'action quand la strategie le demande."
+  capabilities:
+    primary:
+      - "persuasive_copywriting"
+    secondary:
+      - "cta_design"
+    forbidden:
+      - "direct_publishing"
+      - "fake_proof_generation"
+      - "fake_engagement_generation"
+  ownership:
+    owns_sections:
+      - "content_units"
+    contributes_to_sections:
+      - "visual_briefs"
+      - "video_captions"
+    does_not_own:
+      - "publication_directe"
+      - "validation_humaine_finale"
+  inputs:
+    required:
+      - "strategic_diagnosis"
+      - "audience_intelligence"
+      - "positioning"
+      - "influence_architecture"
+      - "platform_strategy"
+      - "calendar_context"
+      - "hook_set"
+      - "content_batch_request"
+    optional:
+      - "growth_system"
+      - "proof_assets"
+      - "visual_briefs"
+      - "video_strategy"
+      - "risk_review"
+      - "previous_content"
+      - "performance_memory"
+    context_requirements:
+      - "context_snapshot"
+      - "project_manifest_if_available"
+    missing_input_behavior:
+      - "mark_assumptions"
+      - "lower_confidence_score"
+      - "ask_user_if_blocking"
+  outputs:
+    produced_artifacts:
+      - "content_units"
+    schema_name: "ContentUnits"
+    required_sections:
+      - "content_units"
+    quality_fields:
+      - "quality_score"
+      - "confidence_score"
+      - "persuasion_score"
+  routing:
+    required_for_intents:
+      - "generate_content_batch"
+    optional_for_intents:
+      - "revise_content_batch"
+      - "generate_video_batch"
+    required_for_platforms: []
+    required_when: []
+    activation_rules: []
+    skip_rules: []
+    fallback_agent_id: "strategist"
+  execution:
+    supported_modes:
+      - "draft"
+      - "deep_work"
+      - "revision"
+      - "critic"
+      - "batch"
+    default_mode: "deep_work"
+    max_iterations: 3
+    timeout_seconds: 240
+    max_tool_calls: 10
+    context_budget: "high"
+    cost_tier: "standard"
+    parallel_safe: true
+  tools:
+    allowed:
+      - "strategy_reader"
+      - "audience_intelligence_reader"
+      - "positioning_reader"
+      - "influence_architecture_reader"
+      - "platform_strategy_reader"
+      - "calendar_reader"
+      - "hook_set_reader"
+      - "proof_asset_reader"
+      - "performance_memory_reader"
+    forbidden:
+      - "publisher_api"
+      - "fake_proof_generator"
+      - "fake_testimonial_generator"
+    usage_rules:
+      - "follow_agent_blueprint"
+      - "do_not_write_final_files_directly"
+      - "do_not_publish_directly"
+  memory:
+    reads:
+      - "brand_memory"
+      - "audience_memory"
+      - "platform_memory"
+      - "performance_memory"
+    writes:
+      - "content_unit_candidate"
+      - "copy_pattern_learning"
+      - "rejected_claim_note"
+    never_store:
+      - "unverified_claims_as_facts"
+      - "sensitive_personal_data"
+      - "fake_testimonials"
+  dependencies:
+    requires_before: []
+    should_run_after:
+      - "hook_master"
+      - "platform_agents"
+    can_run_parallel_with:
+      - "creative_director"
+      - "video_agent"
+    conflicts_with: []
+  quality:
+    minimum_quality_score: 8
+    minimum_confidence_score: 7
+    rejection_conditions:
+      - "output_schema_invalid"
+      - "handoff_unusable"
+      - "fake_proof_or_fake_signal"
+    review_agent_id: "anti_banality_agent"
+  guardrails:
+    global:
+      - "no_fake_proof"
+      - "no_fake_numbers"
+      - "no_fake_testimonials"
+      - "no_spam"
+      - "no_direct_publishing"
+      - "preserve_clean_intensity"
+    domain_specific:
+      - "respect_source_spec"
+      - "mark_hypotheses"
+      - "preserve_offensive_clean_version_when_valid"
+    red_flags:
+      - "unsupported_claims"
+      - "sensitive_personal_data"
+      - "platform_abuse"
+      - "over_sanitized_output"
+  observability:
+    trace_fields:
+      - "agent_id"
+      - "version"
+      - "job_id"
+      - "project_slug"
+      - "platform"
+      - "content_units_count"
+      - "quality_score"
+      - "persuasion_score"
+      - "truthfulness_score"
+    metrics:
+      - "content_units_generated"
+      - "units_flagged_for_risk"
+      - "average_platform_fit_score"
+      - "average_truthfulness_score"
+      - "revision_rate_after_quality_review"
+  versioning:
+    current: "0.1.0"
+    compatible_output_versions:
+      - "ContentUnits.v0"
+    deprecated_by: ""
+    changelog:
+      -
+        version: "0.1.0"
+        date: "2026-05-13"
+        changes:
+          - "registry_entry_created_from_human_spec"

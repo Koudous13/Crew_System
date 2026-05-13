@@ -1,0 +1,191 @@
+agent_registry_entry:
+  identity:
+    agent_id: "video_agent"
+    name: "Video Agent"
+    version: "0.1.0"
+    status: "draft"
+    type: "creator"
+    owner_domain: "video"
+  source:
+    blueprint_path: "docs/agents/video/video_agent.md"
+    prompt_path: "registry/prompts/video_agent.system.txt"
+    schema_path: "registry/schemas/VideoPlan.schema.json"
+    eval_path: "registry/evals/video_agent.eval.yaml"
+    examples_path: ""
+    changelog_path: "docs/agents/video/video_agent.md"
+  purpose:
+    mission: "Prevoir et produire la strategie video : formats, hooks trois secondes, scripts, scenes, miniatures, captions et besoins visuels quand l'utilisateur demande de la video ou quand le calendrier l'exige."
+    primary_question: "Quand la video renforce-t-elle la strategie, et comment la structurer pour retenir l'attention sans perdre preuve, clarte et action ?"
+    success_definition: "La sortie donne des scripts ou briefs video exploitables, avec hook, sequence, rythme, visuels, preuve, CTA, miniature, caption et contraintes de plateforme."
+  capabilities:
+    primary:
+      - "video_strategy"
+    secondary:
+      - "video_script_design"
+    forbidden:
+      - "direct_publishing"
+      - "fake_proof_generation"
+      - "fake_engagement_generation"
+  ownership:
+    owns_sections:
+      - "video_strategy"
+      - "video_scripts"
+    contributes_to_sections:
+      - "content_batch"
+    does_not_own:
+      - "publication_directe"
+      - "validation_humaine_finale"
+  inputs:
+    required:
+      - "strategic_diagnosis"
+      - "audience_intelligence"
+      - "positioning"
+      - "influence_architecture"
+      - "platform_strategy"
+    optional:
+      - "annual_editorial_calendar"
+      - "content_units"
+      - "hook_set"
+      - "creative_direction"
+      - "proof_assets"
+      - "brand_assets"
+      - "performance_memory"
+      - "user_video_request"
+    context_requirements:
+      - "context_snapshot"
+      - "project_manifest_if_available"
+    missing_input_behavior:
+      - "mark_assumptions"
+      - "lower_confidence_score"
+      - "ask_user_if_blocking"
+  outputs:
+    produced_artifacts:
+      - "video_plan"
+    schema_name: "VideoPlan"
+    required_sections:
+      - "video_plan"
+    quality_fields:
+      - "quality_score"
+      - "confidence_score"
+      - "retention_score"
+  routing:
+    required_for_intents:
+      - "generate_video_batch"
+    optional_for_intents:
+      - "create_campaign_pack"
+      - "generate_content_batch"
+    required_for_platforms: []
+    required_when: []
+    activation_rules:
+      - "video_policy != none"
+      - "user_requested_video is true"
+      - "calendar_week.video_needed is true"
+    skip_rules:
+      - "video_policy == none"
+      - "no video deliverable expected"
+    fallback_agent_id: "copywriter"
+  execution:
+    supported_modes:
+      - "draft"
+      - "deep_work"
+      - "revision"
+      - "critic"
+      - "batch"
+    default_mode: "deep_work"
+    max_iterations: 3
+    timeout_seconds: 240
+    max_tool_calls: 10
+    context_budget: "high"
+    cost_tier: "standard"
+    parallel_safe: true
+  tools:
+    allowed:
+      - "strategy_reader"
+      - "audience_intelligence_reader"
+      - "positioning_reader"
+      - "influence_architecture_reader"
+      - "platform_strategy_reader"
+      - "calendar_reader"
+      - "hook_set_reader"
+      - "creative_direction_reader"
+      - "proof_asset_reader"
+    forbidden:
+      - "publisher_api"
+      - "fake_demo_generator"
+      - "fake_result_generator"
+    usage_rules:
+      - "follow_agent_blueprint"
+      - "do_not_write_final_files_directly"
+      - "do_not_publish_directly"
+  memory:
+    reads:
+      - "brand_memory"
+      - "platform_memory"
+      - "performance_memory"
+    writes:
+      - "video_pattern_candidate"
+      - "video_script_candidate"
+      - "thumbnail_learning"
+    never_store:
+      - "unverified_claims_as_facts"
+      - "fake_proof"
+      - "sensitive_personal_data"
+  dependencies:
+    requires_before: []
+    should_run_after:
+      - "platform_agents"
+    can_run_parallel_with:
+      - "creative_director"
+    conflicts_with: []
+  quality:
+    minimum_quality_score: 8
+    minimum_confidence_score: 7
+    rejection_conditions:
+      - "output_schema_invalid"
+      - "handoff_unusable"
+      - "fake_proof_or_fake_signal"
+    review_agent_id: "risk_reviewer"
+  guardrails:
+    global:
+      - "no_fake_proof"
+      - "no_fake_numbers"
+      - "no_fake_testimonials"
+      - "no_spam"
+      - "no_direct_publishing"
+      - "preserve_clean_intensity"
+    domain_specific:
+      - "respect_source_spec"
+      - "mark_hypotheses"
+      - "preserve_offensive_clean_version_when_valid"
+    red_flags:
+      - "unsupported_claims"
+      - "sensitive_personal_data"
+      - "platform_abuse"
+      - "over_sanitized_output"
+  observability:
+    trace_fields:
+      - "agent_id"
+      - "version"
+      - "job_id"
+      - "project_slug"
+      - "videos_count"
+      - "quality_score"
+      - "retention_score"
+      - "feasibility_score"
+    metrics:
+      - "videos_generated"
+      - "videos_refused"
+      - "asset_gap_count"
+      - "risky_thumbnail_count"
+      - "average_retention_score"
+  versioning:
+    current: "0.1.0"
+    compatible_output_versions:
+      - "VideoPlan.v0"
+    deprecated_by: ""
+    changelog:
+      -
+        version: "0.1.0"
+        date: "2026-05-13"
+        changes:
+          - "registry_entry_created_from_human_spec"

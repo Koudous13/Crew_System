@@ -1,0 +1,177 @@
+agent_registry_entry:
+  identity:
+    agent_id: "positioning_agent"
+    name: "Positioning Agent"
+    version: "0.1.0"
+    status: "draft"
+    type: "strategist"
+    owner_domain: "strategy"
+  source:
+    blueprint_path: "docs/agents/core/positioning_agent.md"
+    prompt_path: "registry/prompts/positioning_agent.system.txt"
+    schema_path: "registry/schemas/PositioningSystem.schema.json"
+    eval_path: "registry/evals/positioning_agent.eval.yaml"
+    examples_path: ""
+    changelog_path: "docs/agents/core/positioning_agent.md"
+  purpose:
+    mission: "Transformer l'offre en position claire, differenciante et desirable, capable d'ancrer une annee de communication."
+    primary_question: "Quelle nouvelle croyance doit rendre cette offre differente, memorable et plus desirable que les alternatives evidentes ?"
+    success_definition: "La sortie donne a la campagne une position defendable, une one-liner forte, un ennemi, un mecanisme unique et un systeme de messages reutilisable. Une position defendable ne doit pas devenir timide. Si la preuve manque, l'agent doit separer promesse desiree, promesse actuellement prouvable et promesse a construire, sans casser l'ambition du positionnement."
+  capabilities:
+    primary:
+      - "positioning_design"
+    secondary:
+      - "message_system_design"
+      - "proof_roadmap"
+    forbidden:
+      - "direct_publishing"
+      - "fake_proof_generation"
+      - "fake_engagement_generation"
+  ownership:
+    owns_sections:
+      - "positioning"
+      - "message_system"
+    contributes_to_sections:
+      - "influence_architecture"
+      - "growth_system"
+    does_not_own:
+      - "publication_directe"
+      - "validation_humaine_finale"
+  inputs:
+    required:
+      - "normalized_brief"
+      - "strategic_diagnosis"
+      - "audience_intelligence"
+    optional:
+      - "competitor_notes"
+      - "customer_reviews"
+      - "proof_assets"
+      - "founder_story"
+    context_requirements:
+      - "context_snapshot"
+      - "project_manifest_if_available"
+    missing_input_behavior:
+      - "mark_assumptions"
+      - "lower_confidence_score"
+      - "ask_user_if_blocking"
+  outputs:
+    produced_artifacts:
+      - "positioning"
+      - "message_system"
+    schema_name: "PositioningSystem"
+    required_sections:
+      - "positioning"
+      - "message_system"
+    quality_fields:
+      - "quality_score"
+      - "confidence_score"
+      - "differentiation_score"
+  routing:
+    required_for_intents:
+      - "create_campaign_pack"
+    optional_for_intents:
+      - "generate_content_batch"
+      - "revise_document"
+      - "analyze_performance"
+    required_for_platforms: []
+    required_when: []
+    activation_rules: []
+    skip_rules: []
+    fallback_agent_id: "strategist"
+  execution:
+    supported_modes:
+      - "draft"
+      - "deep_work"
+      - "critic"
+      - "revision"
+      - "benchmark"
+    default_mode: "deep_work"
+    max_iterations: 3
+    timeout_seconds: 150
+    max_tool_calls: 6
+    context_budget: "high"
+    cost_tier: "standard"
+    parallel_safe: false
+  tools:
+    allowed:
+      - "brief_reader"
+      - "strategy_reader"
+      - "audience_intelligence_reader"
+      - "proof_asset_reader"
+      - "competitor_notes_reader"
+    forbidden:
+      - "file_writer"
+      - "fake_proof_generator"
+      - "publisher_api"
+    usage_rules:
+      - "follow_agent_blueprint"
+      - "do_not_write_final_files_directly"
+      - "do_not_publish_directly"
+  memory:
+    reads:
+      - "brand_memory"
+      - "audience_memory"
+      - "decision_memory"
+    writes:
+      - "positioning_candidate"
+      - "forbidden_message_candidate"
+      - "proof_gap_candidate"
+    never_store:
+      - "unverified_claims_as_facts"
+      - "fake_competitor_claims"
+  dependencies:
+    requires_before: []
+    should_run_after:
+      - "audience_psychologist"
+    can_run_parallel_with: []
+    conflicts_with: []
+  quality:
+    minimum_quality_score: 8
+    minimum_confidence_score: 7
+    rejection_conditions:
+      - "output_schema_invalid"
+      - "handoff_unusable"
+      - "fake_proof_or_fake_signal"
+    review_agent_id: "strategist"
+  guardrails:
+    global:
+      - "no_fake_proof"
+      - "no_fake_numbers"
+      - "no_fake_testimonials"
+      - "no_spam"
+      - "no_direct_publishing"
+      - "preserve_clean_intensity"
+    domain_specific:
+      - "respect_source_spec"
+      - "mark_hypotheses"
+      - "preserve_offensive_clean_version_when_valid"
+    red_flags:
+      - "unsupported_claims"
+      - "sensitive_personal_data"
+      - "platform_abuse"
+      - "over_sanitized_output"
+  observability:
+    trace_fields:
+      - "agent_id"
+      - "version"
+      - "job_id"
+      - "project_slug"
+      - "quality_score"
+      - "confidence_score"
+      - "differentiation_score"
+      - "proof_strength_score"
+    metrics:
+      - "positioning_revision_rate"
+      - "proof_gap_count"
+      - "forbidden_message_hits"
+  versioning:
+    current: "0.1.0"
+    compatible_output_versions:
+      - "PositioningSystem.v0"
+    deprecated_by: ""
+    changelog:
+      -
+        version: "0.1.0"
+        date: "2026-05-13"
+        changes:
+          - "registry_entry_created_from_human_spec"

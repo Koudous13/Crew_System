@@ -1,0 +1,160 @@
+agent_registry_entry:
+  identity:
+    agent_id: "intake_normalizer"
+    name: "Intake Normalizer"
+    version: "0.1.0"
+    status: "draft"
+    type: "utility"
+    owner_domain: "runtime"
+  source:
+    blueprint_path: "docs/agents/core/intake_normalizer.md"
+    prompt_path: "registry/prompts/intake_normalizer.system.txt"
+    schema_path: "registry/schemas/NormalizedBrief.schema.json"
+    eval_path: "registry/evals/intake_normalizer.eval.yaml"
+    examples_path: ""
+    changelog_path: "docs/agents/core/intake_normalizer.md"
+  purpose:
+    mission: "Transformer un message utilisateur brut, une idee business ou un concept SaaS en brief structure que le runtime et les agents suivants peuvent utiliser sans deviner."
+    primary_question: "Que veut vraiment construire l'utilisateur, pour qui, avec quel objectif, quelles contraintes et quels livrables attendus ?"
+    success_definition: "La sortie permet au runtime de creer ou mettre a jour un projet sans perdre l'intention initiale, tout en marquant clairement les hypotheses et les informations manquantes."
+  capabilities:
+    primary:
+      - "intake_normalization"
+    secondary:
+      - "request_structuring"
+    forbidden:
+      - "direct_publishing"
+      - "fake_proof_generation"
+      - "fake_engagement_generation"
+  ownership:
+    owns_sections:
+      - "normalized_brief"
+    contributes_to_sections:
+      - "project_manifest"
+    does_not_own:
+      - "publication_directe"
+      - "validation_humaine_finale"
+  inputs:
+    required:
+      - "user_message"
+    optional:
+      - "attachments"
+      - "referenced_files"
+      - "previous_conversation_summary"
+      - "active_project_hint"
+    context_requirements:
+      - "context_snapshot"
+      - "project_manifest_if_available"
+    missing_input_behavior:
+      - "mark_assumptions"
+      - "lower_confidence_score"
+      - "ask_user_if_blocking"
+  outputs:
+    produced_artifacts:
+      - "normalized_brief"
+    schema_name: "NormalizedBrief"
+    required_sections:
+      - "normalized_brief"
+    quality_fields:
+      - "quality_score"
+      - "confidence_score"
+  routing:
+    required_for_intents:
+      - "create_project_from_idea"
+      - "create_campaign_pack"
+    optional_for_intents: []
+    required_for_platforms: []
+    required_when: []
+    activation_rules: []
+    skip_rules: []
+    fallback_agent_id: ""
+  execution:
+    supported_modes:
+      - "draft"
+      - "deep_work"
+      - "revision"
+    default_mode: "deep_work"
+    max_iterations: 2
+    timeout_seconds: 90
+    max_tool_calls: 3
+    context_budget: "medium"
+    cost_tier: "low"
+    parallel_safe: false
+  tools:
+    allowed:
+      - "conversation_context_reader"
+      - "attachment_reader"
+      - "referenced_file_reader"
+    forbidden:
+      - "file_writer"
+      - "publisher_api"
+      - "external_social_api"
+    usage_rules:
+      - "follow_agent_blueprint"
+      - "do_not_write_final_files_directly"
+      - "do_not_publish_directly"
+  memory:
+    reads:
+      - "conversation_memory"
+      - "active_project_hint"
+    writes:
+      - "normalized_brief_candidate"
+      - "assumptions_candidate"
+    never_store:
+      - "secrets"
+      - "unverified_claims_as_facts"
+      - "personal_sensitive_data"
+  dependencies:
+    requires_before: []
+    should_run_after: []
+    can_run_parallel_with: []
+    conflicts_with: []
+  quality:
+    minimum_quality_score: 8
+    minimum_confidence_score: 7
+    rejection_conditions:
+      - "output_schema_invalid"
+      - "handoff_unusable"
+      - "fake_proof_or_fake_signal"
+    review_agent_id: "strategist"
+  guardrails:
+    global:
+      - "no_fake_proof"
+      - "no_fake_numbers"
+      - "no_fake_testimonials"
+      - "no_spam"
+      - "no_direct_publishing"
+      - "preserve_clean_intensity"
+    domain_specific:
+      - "respect_source_spec"
+      - "mark_hypotheses"
+      - "preserve_offensive_clean_version_when_valid"
+    red_flags:
+      - "unsupported_claims"
+      - "sensitive_personal_data"
+      - "platform_abuse"
+      - "over_sanitized_output"
+  observability:
+    trace_fields:
+      - "agent_id"
+      - "version"
+      - "request_id"
+      - "quality_score"
+      - "confidence_score"
+      - "missing_information_count"
+      - "blocker_count"
+    metrics:
+      - "brief_completion_rate"
+      - "clarification_rate"
+      - "assumption_count"
+  versioning:
+    current: "0.1.0"
+    compatible_output_versions:
+      - "NormalizedBrief.v0"
+    deprecated_by: ""
+    changelog:
+      -
+        version: "0.1.0"
+        date: "2026-05-13"
+        changes:
+          - "registry_entry_created_from_human_spec"

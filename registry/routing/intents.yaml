@@ -1,0 +1,175 @@
+intent_routing:
+  create_project_from_idea:
+    required:
+      - "intake_normalizer"
+      - "file_architect"
+      - "strategist"
+      - "audience_psychologist"
+      - "positioning_agent"
+      - "influence_architect"
+      - "growth_hacker"
+      - "facebook_native_agent"
+      - "linkedin_native_agent"
+      - "calendar_architect"
+      - "creative_director"
+      - "anti_banality_agent"
+      - "risk_reviewer"
+    optional:
+      - "video_agent"
+      - "experimentation_agent"
+  create_campaign_pack:
+    required:
+      - "strategist"
+      - "audience_psychologist"
+      - "positioning_agent"
+      - "influence_architect"
+      - "growth_hacker"
+      - "calendar_architect"
+      - "anti_banality_agent"
+      - "risk_reviewer"
+    platform_required:
+      facebook:
+        - "facebook_native_agent"
+      linkedin:
+        - "linkedin_native_agent"
+    optional:
+      - "creative_director"
+      - "video_agent"
+      - "experimentation_agent"
+  generate_annual_calendar:
+    required:
+      - "strategist"
+      - "audience_psychologist"
+      - "positioning_agent"
+      - "influence_architect"
+      - "growth_hacker"
+      - "calendar_architect"
+    platform_required:
+      facebook:
+        - "facebook_native_agent"
+      linkedin:
+        - "linkedin_native_agent"
+    optional:
+      - "creative_director"
+      - "video_agent"
+      - "anti_banality_agent"
+  generate_content_batch:
+    required:
+      - "strategist"
+      - "calendar_architect"
+      - "audience_psychologist"
+      - "hook_master"
+      - "copywriter"
+      - "anti_banality_agent"
+    platform_required:
+      facebook:
+        - "facebook_native_agent"
+      linkedin:
+        - "linkedin_native_agent"
+    conditional:
+      visual_policy_when_useful_or_required:
+        - "creative_director"
+      video_policy_when_useful_or_required:
+        - "video_agent"
+      growth_mechanism_present:
+        - "growth_hacker"
+      claims_or_high_risk:
+        - "risk_reviewer"
+  generate_video_batch:
+    required:
+      - "video_agent"
+      - "hook_master"
+      - "copywriter"
+      - "anti_banality_agent"
+    platform_required:
+      facebook:
+        - "facebook_native_agent"
+      linkedin:
+        - "linkedin_native_agent"
+    optional:
+      - "creative_director"
+      - "risk_reviewer"
+      - "experimentation_agent"
+  generate_visual_batch:
+    required:
+      - "creative_director"
+      - "anti_banality_agent"
+    platform_required:
+      facebook:
+        - "facebook_native_agent"
+      linkedin:
+        - "linkedin_native_agent"
+    optional:
+      - "risk_reviewer"
+  revise_content_batch:
+    required:
+      - "strategist"
+      - "copywriter"
+      - "anti_banality_agent"
+    conditional:
+      hooks_changed:
+        - "hook_master"
+      visuals_changed:
+        - "creative_director"
+      risk_changed:
+        - "risk_reviewer"
+  analyze_performance:
+    required:
+      - "performance_analyst"
+      - "strategist"
+      - "experimentation_agent"
+    optional:
+      - "growth_hacker"
+      - "audience_psychologist"
+platform_routing:
+  facebook:
+    required_agent: "facebook_native_agent"
+    required_context:
+      - "platforms/facebook_strategy.md"
+  linkedin:
+    required_agent: "linkedin_native_agent"
+    required_context:
+      - "platforms/linkedin_strategy.md"
+conditional_activation_rules:
+  creative_director:
+    - "visual_policy != none"
+    - "content_format includes carousel"
+    - "visual_needed is true"
+    - "user requested images or carousels"
+  video_agent:
+    - "video_policy != none"
+    - "user_requested_video is true"
+    - "calendar_week.video_needed is true"
+  growth_hacker:
+    - "growth_mechanism required"
+    - "batch_goal includes comments"
+    - "batch_goal includes leads"
+    - "user asks for hacks or growth loops"
+  risk_reviewer:
+    - "claims_present"
+    - "risk_score > 5"
+    - "aggression_level == high"
+    - "sensitive_topic is true"
+  experimentation_agent:
+    - "ab_tests requested"
+    - "performance_analysis requested"
+    - "campaign_pack requires experiments"
+  anti_banality_agent:
+    - "artifact intended for final delivery"
+    - "batch or campaign pack needs final quality gate"
+skip_rules:
+  video_agent:
+    - "video_policy == none"
+    - "no video deliverable expected"
+  creative_director:
+    - "visual_policy == none"
+    - "text_only batch confirmed"
+  growth_hacker:
+    - "pure formatting revision"
+    - "no growth mechanism needed"
+  risk_reviewer:
+    - "low risk"
+    - "no claims"
+    - "no sensitive topic"
+  performance_analyst:
+    - "no performance data available"

@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://crew-system.local/schemas/LinkedInNativeStrategy.schema.json",
+  "title": "LinkedInNativeStrategy",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "linkedin_strategy",
+    "linkedin_content_directions"
+  ],
+  "properties": {
+    "linkedin_strategy": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "linkedin_content_directions": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "self_evaluation": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "quality_score": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10
+        },
+        "confidence_score": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10
+        },
+        "weakest_point": {
+          "type": "string"
+        },
+        "next_improvement": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  "x-agent-id": "linkedin_native_agent",
+  "x-status": "draft",
+  "x-notes": "Minimal runtime binding schema. Human source spec remains authoritative until strict schemas are implemented."
+}

@@ -1,0 +1,164 @@
+agent_registry_entry:
+  identity:
+    agent_id: "file_architect"
+    name: "File Architect"
+    version: "0.1.0"
+    status: "draft"
+    type: "utility"
+    owner_domain: "runtime"
+  source:
+    blueprint_path: "docs/agents/core/file_architect.md"
+    prompt_path: "registry/prompts/file_architect.system.txt"
+    schema_path: "registry/schemas/ProjectFilePlan.schema.json"
+    eval_path: "registry/evals/file_architect.eval.yaml"
+    examples_path: ""
+    changelog_path: "docs/agents/core/file_architect.md"
+  purpose:
+    mission: "Concevoir le plan durable de fichiers et dossiers d'un projet Crew_System selon `PROJECT_FILE_SYSTEM_CONTRACT.md`."
+    primary_question: "Quelle structure exacte de projet, fichiers, manifests et write plan doit exister pour que le systeme puisse se souvenir, reprendre et generer des outputs futurs en securite ?"
+    success_definition: "Le runtime recoit un plan fichier clair, executable sans deviner les chemins ni ecraser la memoire importante du projet."
+  capabilities:
+    primary:
+      - "project_file_planning"
+    secondary:
+      - "manifest_planning"
+    forbidden:
+      - "direct_publishing"
+      - "fake_proof_generation"
+      - "fake_engagement_generation"
+  ownership:
+    owns_sections:
+      - "project_file_plan"
+    contributes_to_sections:
+      - "write_plan"
+    does_not_own:
+      - "publication_directe"
+      - "validation_humaine_finale"
+  inputs:
+    required:
+      - "normalized_brief"
+      - "project_slug"
+      - "workspace_root"
+    optional:
+      - "existing_project_manifest"
+      - "existing_files_scan"
+      - "requested_outputs"
+    context_requirements:
+      - "context_snapshot"
+      - "project_manifest_if_available"
+    missing_input_behavior:
+      - "mark_assumptions"
+      - "lower_confidence_score"
+      - "ask_user_if_blocking"
+  outputs:
+    produced_artifacts:
+      - "project_file_plan"
+    schema_name: "ProjectFilePlan"
+    required_sections:
+      - "project_file_plan"
+    quality_fields:
+      - "quality_score"
+      - "confidence_score"
+  routing:
+    required_for_intents:
+      - "create_project_from_idea"
+      - "create_campaign_pack"
+    optional_for_intents:
+      - "revise_document"
+    required_for_platforms: []
+    required_when: []
+    activation_rules: []
+    skip_rules: []
+    fallback_agent_id: ""
+  execution:
+    supported_modes:
+      - "deep_work"
+      - "revision"
+      - "critic"
+    default_mode: "deep_work"
+    max_iterations: 2
+    timeout_seconds: 90
+    max_tool_calls: 5
+    context_budget: "medium"
+    cost_tier: "low"
+    parallel_safe: false
+  tools:
+    allowed:
+      - "project_manifest_reader"
+      - "filesystem_scan_reader"
+      - "contract_reader"
+    forbidden:
+      - "runtime_file_writer"
+      - "destructive_delete"
+      - "publisher_api"
+    usage_rules:
+      - "follow_agent_blueprint"
+      - "do_not_write_final_files_directly"
+      - "do_not_publish_directly"
+  memory:
+    reads:
+      - "project_manifest"
+      - "workspace_manifest"
+      - "artifact_registry"
+    writes:
+      - "project_file_plan_candidate"
+      - "manifest_update_candidate"
+    never_store:
+      - "secrets"
+      - "credentials"
+      - "absolute_private_paths_unless_required_by_runtime"
+  dependencies:
+    requires_before: []
+    should_run_after:
+      - "intake_normalizer"
+    can_run_parallel_with: []
+    conflicts_with: []
+  quality:
+    minimum_quality_score: 8
+    minimum_confidence_score: 7
+    rejection_conditions:
+      - "output_schema_invalid"
+      - "handoff_unusable"
+      - "fake_proof_or_fake_signal"
+    review_agent_id: "strategist"
+  guardrails:
+    global:
+      - "no_fake_proof"
+      - "no_fake_numbers"
+      - "no_fake_testimonials"
+      - "no_spam"
+      - "no_direct_publishing"
+      - "preserve_clean_intensity"
+    domain_specific:
+      - "respect_source_spec"
+      - "mark_hypotheses"
+      - "preserve_offensive_clean_version_when_valid"
+    red_flags:
+      - "unsupported_claims"
+      - "sensitive_personal_data"
+      - "platform_abuse"
+      - "over_sanitized_output"
+  observability:
+    trace_fields:
+      - "agent_id"
+      - "version"
+      - "job_id"
+      - "project_slug"
+      - "files_to_create_count"
+      - "risky_write_count"
+      - "quality_score"
+    metrics:
+      - "manifest_completeness"
+      - "unsafe_write_prevented_count"
+      - "missing_folder_count"
+  versioning:
+    current: "0.1.0"
+    compatible_output_versions:
+      - "ProjectFilePlan.v0"
+    deprecated_by: ""
+    changelog:
+      -
+        version: "0.1.0"
+        date: "2026-05-13"
+        changes:
+          - "registry_entry_created_from_human_spec"

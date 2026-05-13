@@ -1,0 +1,277 @@
+{
+  "registry_id": "crew_system_agent_registry",
+  "version": "0.1.0",
+  "agents": [
+    {
+      "agent_id": "intake_normalizer",
+      "name": "Intake Normalizer",
+      "status": "draft",
+      "type": "utility",
+      "owner_domain": "runtime",
+      "capabilities": [
+        "intake_normalization"
+      ],
+      "schema_name": "NormalizedBrief",
+      "entry_path": "registry/agents/intake_normalizer.yaml",
+      "prompt_path": "registry/prompts/intake_normalizer.system.txt",
+      "schema_path": "registry/schemas/NormalizedBrief.schema.json",
+      "eval_path": "registry/evals/intake_normalizer.eval.yaml"
+    },
+    {
+      "agent_id": "file_architect",
+      "name": "File Architect",
+      "status": "draft",
+      "type": "utility",
+      "owner_domain": "runtime",
+      "capabilities": [
+        "project_file_planning"
+      ],
+      "schema_name": "ProjectFilePlan",
+      "entry_path": "registry/agents/file_architect.yaml",
+      "prompt_path": "registry/prompts/file_architect.system.txt",
+      "schema_path": "registry/schemas/ProjectFilePlan.schema.json",
+      "eval_path": "registry/evals/file_architect.eval.yaml"
+    },
+    {
+      "agent_id": "strategist",
+      "name": "Strategist",
+      "status": "draft",
+      "type": "strategist",
+      "owner_domain": "strategy",
+      "capabilities": [
+        "strategic_diagnosis",
+        "final_arbitration"
+      ],
+      "schema_name": "StrategicDiagnosis",
+      "entry_path": "registry/agents/strategist.yaml",
+      "prompt_path": "registry/prompts/strategist.system.txt",
+      "schema_path": "registry/schemas/StrategicDiagnosis.schema.json",
+      "eval_path": "registry/evals/strategist.eval.yaml"
+    },
+    {
+      "agent_id": "audience_psychologist",
+      "name": "Audience Psychologist",
+      "status": "draft",
+      "type": "analyst",
+      "owner_domain": "strategy",
+      "capabilities": [
+        "audience_psychology"
+      ],
+      "schema_name": "AudienceIntelligence",
+      "entry_path": "registry/agents/audience_psychologist.yaml",
+      "prompt_path": "registry/prompts/audience_psychologist.system.txt",
+      "schema_path": "registry/schemas/AudienceIntelligence.schema.json",
+      "eval_path": "registry/evals/audience_psychologist.eval.yaml"
+    },
+    {
+      "agent_id": "positioning_agent",
+      "name": "Positioning Agent",
+      "status": "draft",
+      "type": "strategist",
+      "owner_domain": "strategy",
+      "capabilities": [
+        "positioning_design"
+      ],
+      "schema_name": "PositioningSystem",
+      "entry_path": "registry/agents/positioning_agent.yaml",
+      "prompt_path": "registry/prompts/positioning_agent.system.txt",
+      "schema_path": "registry/schemas/PositioningSystem.schema.json",
+      "eval_path": "registry/evals/positioning_agent.eval.yaml"
+    },
+    {
+      "agent_id": "influence_architect",
+      "name": "Influence Architect",
+      "status": "draft",
+      "type": "strategist",
+      "owner_domain": "strategy",
+      "capabilities": [
+        "influence_architecture"
+      ],
+      "schema_name": "InfluenceArchitecture",
+      "entry_path": "registry/agents/influence_architect.yaml",
+      "prompt_path": "registry/prompts/influence_architect.system.txt",
+      "schema_path": "registry/schemas/InfluenceArchitecture.schema.json",
+      "eval_path": "registry/evals/influence_architect.eval.yaml"
+    },
+    {
+      "agent_id": "growth_hacker",
+      "name": "Growth Hacker",
+      "status": "draft",
+      "type": "optimizer",
+      "owner_domain": "growth",
+      "capabilities": [
+        "growth_loop_design"
+      ],
+      "schema_name": "GrowthSystem",
+      "entry_path": "registry/agents/growth_hacker.yaml",
+      "prompt_path": "registry/prompts/growth_hacker.system.txt",
+      "schema_path": "registry/schemas/GrowthSystem.schema.json",
+      "eval_path": "registry/evals/growth_hacker.eval.yaml"
+    },
+    {
+      "agent_id": "facebook_native_agent",
+      "name": "Facebook Native Agent",
+      "status": "draft",
+      "type": "creator",
+      "owner_domain": "platform",
+      "capabilities": [
+        "platform_strategy_facebook"
+      ],
+      "schema_name": "FacebookNativeStrategy",
+      "entry_path": "registry/agents/facebook_native_agent.yaml",
+      "prompt_path": "registry/prompts/facebook_native_agent.system.txt",
+      "schema_path": "registry/schemas/FacebookNativeStrategy.schema.json",
+      "eval_path": "registry/evals/facebook_native_agent.eval.yaml"
+    },
+    {
+      "agent_id": "linkedin_native_agent",
+      "name": "LinkedIn Native Agent",
+      "status": "draft",
+      "type": "creator",
+      "owner_domain": "platform",
+      "capabilities": [
+        "platform_strategy_linkedin"
+      ],
+      "schema_name": "LinkedInNativeStrategy",
+      "entry_path": "registry/agents/linkedin_native_agent.yaml",
+      "prompt_path": "registry/prompts/linkedin_native_agent.system.txt",
+      "schema_path": "registry/schemas/LinkedInNativeStrategy.schema.json",
+      "eval_path": "registry/evals/linkedin_native_agent.eval.yaml"
+    },
+    {
+      "agent_id": "calendar_architect",
+      "name": "Calendar Architect",
+      "status": "draft",
+      "type": "orchestrator",
+      "owner_domain": "planning",
+      "capabilities": [
+        "calendar_architecture"
+      ],
+      "schema_name": "AnnualEditorialCalendar",
+      "entry_path": "registry/agents/calendar_architect.yaml",
+      "prompt_path": "registry/prompts/calendar_architect.system.txt",
+      "schema_path": "registry/schemas/AnnualEditorialCalendar.schema.json",
+      "eval_path": "registry/evals/calendar_architect.eval.yaml"
+    },
+    {
+      "agent_id": "hook_master",
+      "name": "Hook Master",
+      "status": "draft",
+      "type": "creator",
+      "owner_domain": "content",
+      "capabilities": [
+        "hook_generation"
+      ],
+      "schema_name": "HookSet",
+      "entry_path": "registry/agents/hook_master.yaml",
+      "prompt_path": "registry/prompts/hook_master.system.txt",
+      "schema_path": "registry/schemas/HookSet.schema.json",
+      "eval_path": "registry/evals/hook_master.eval.yaml"
+    },
+    {
+      "agent_id": "copywriter",
+      "name": "Copywriter",
+      "status": "draft",
+      "type": "creator",
+      "owner_domain": "content",
+      "capabilities": [
+        "persuasive_copywriting"
+      ],
+      "schema_name": "ContentUnits",
+      "entry_path": "registry/agents/copywriter.yaml",
+      "prompt_path": "registry/prompts/copywriter.system.txt",
+      "schema_path": "registry/schemas/ContentUnits.schema.json",
+      "eval_path": "registry/evals/copywriter.eval.yaml"
+    },
+    {
+      "agent_id": "creative_director",
+      "name": "Creative Director",
+      "status": "draft",
+      "type": "creator",
+      "owner_domain": "creative",
+      "capabilities": [
+        "creative_direction"
+      ],
+      "schema_name": "CreativeDirection",
+      "entry_path": "registry/agents/creative_director.yaml",
+      "prompt_path": "registry/prompts/creative_director.system.txt",
+      "schema_path": "registry/schemas/CreativeDirection.schema.json",
+      "eval_path": "registry/evals/creative_director.eval.yaml"
+    },
+    {
+      "agent_id": "video_agent",
+      "name": "Video Agent",
+      "status": "draft",
+      "type": "creator",
+      "owner_domain": "video",
+      "capabilities": [
+        "video_strategy"
+      ],
+      "schema_name": "VideoPlan",
+      "entry_path": "registry/agents/video_agent.yaml",
+      "prompt_path": "registry/prompts/video_agent.system.txt",
+      "schema_path": "registry/schemas/VideoPlan.schema.json",
+      "eval_path": "registry/evals/video_agent.eval.yaml"
+    },
+    {
+      "agent_id": "experimentation_agent",
+      "name": "Experimentation Agent",
+      "status": "draft",
+      "type": "optimizer",
+      "owner_domain": "experimentation",
+      "capabilities": [
+        "experimentation_design"
+      ],
+      "schema_name": "ExperimentationPlan",
+      "entry_path": "registry/agents/experimentation_agent.yaml",
+      "prompt_path": "registry/prompts/experimentation_agent.system.txt",
+      "schema_path": "registry/schemas/ExperimentationPlan.schema.json",
+      "eval_path": "registry/evals/experimentation_agent.eval.yaml"
+    },
+    {
+      "agent_id": "anti_banality_agent",
+      "name": "Anti Banality Agent",
+      "status": "draft",
+      "type": "critic",
+      "owner_domain": "quality",
+      "capabilities": [
+        "anti_banality_review"
+      ],
+      "schema_name": "QualityReview",
+      "entry_path": "registry/agents/anti_banality_agent.yaml",
+      "prompt_path": "registry/prompts/anti_banality_agent.system.txt",
+      "schema_path": "registry/schemas/QualityReview.schema.json",
+      "eval_path": "registry/evals/anti_banality_agent.eval.yaml"
+    },
+    {
+      "agent_id": "risk_reviewer",
+      "name": "Risk Reviewer",
+      "status": "draft",
+      "type": "reviewer",
+      "owner_domain": "risk",
+      "capabilities": [
+        "risk_review"
+      ],
+      "schema_name": "RiskReview",
+      "entry_path": "registry/agents/risk_reviewer.yaml",
+      "prompt_path": "registry/prompts/risk_reviewer.system.txt",
+      "schema_path": "registry/schemas/RiskReview.schema.json",
+      "eval_path": "registry/evals/risk_reviewer.eval.yaml"
+    },
+    {
+      "agent_id": "performance_analyst",
+      "name": "Performance Analyst",
+      "status": "draft",
+      "type": "analyst",
+      "owner_domain": "analysis",
+      "capabilities": [
+        "performance_analysis"
+      ],
+      "schema_name": "PerformanceReport",
+      "entry_path": "registry/agents/performance_analyst.yaml",
+      "prompt_path": "registry/prompts/performance_analyst.system.txt",
+      "schema_path": "registry/schemas/PerformanceReport.schema.json",
+      "eval_path": "registry/evals/performance_analyst.eval.yaml"
+    }
+  ]
+}

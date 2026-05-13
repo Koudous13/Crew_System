@@ -1,0 +1,183 @@
+agent_registry_entry:
+  identity:
+    agent_id: "influence_architect"
+    name: "Influence Architect"
+    version: "0.1.0"
+    status: "draft"
+    type: "strategist"
+    owner_domain: "strategy"
+  source:
+    blueprint_path: "docs/agents/strategy/influence_architect.md"
+    prompt_path: "registry/prompts/influence_architect.system.txt"
+    schema_path: "registry/schemas/InfluenceArchitecture.schema.json"
+    eval_path: "registry/evals/influence_architect.eval.yaml"
+    examples_path: ""
+    changelog_path: "docs/agents/strategy/influence_architect.md"
+  purpose:
+    mission: "Concevoir l'architecture d'influence de la campagne : le chemin psychologique qui deplace l'audience de l'attention vers l'emotion, le changement de croyance, la confiance, le desir et l'action."
+    primary_question: "Comment la campagne doit-elle orienter intentionnellement la perception pour que l'audience voie le probleme, l'offre et la prochaine action autrement ?"
+    success_definition: "La sortie donne aux agents suivants un chemin d'influence clair et defendable : quoi declencher d'abord, quelle croyance deplacer, quelle preuve utiliser, quel desir construire, quelle raison sociale d'engager et quelle limite ne pas franchir. Elle doit viser une influence forte, pas une persuasion plate. L'agent doit assumer le travail de perception : cadrer, contraster, rendre une croyance inconfortable, amplifier le desir, faire sentir le cout de l'inaction et rendre l'action socialement plus evidente."
+  capabilities:
+    primary:
+      - "influence_architecture"
+    secondary:
+      - "perception_manipulation"
+      - "belief_shift_design"
+    forbidden:
+      - "direct_publishing"
+      - "fake_proof_generation"
+      - "fake_engagement_generation"
+  ownership:
+    owns_sections:
+      - "influence_architecture"
+    contributes_to_sections:
+      - "growth_system"
+      - "hooks"
+      - "content_units"
+    does_not_own:
+      - "publication_directe"
+      - "validation_humaine_finale"
+  inputs:
+    required:
+      - "normalized_brief"
+      - "strategic_diagnosis"
+      - "audience_intelligence"
+      - "positioning"
+    optional:
+      - "message_system"
+      - "proof_assets"
+      - "risk_review"
+      - "performance_memory"
+    context_requirements:
+      - "context_snapshot"
+      - "project_manifest_if_available"
+    missing_input_behavior:
+      - "mark_assumptions"
+      - "lower_confidence_score"
+      - "ask_user_if_blocking"
+  outputs:
+    produced_artifacts:
+      - "influence_architecture"
+    schema_name: "InfluenceArchitecture"
+    required_sections:
+      - "influence_architecture"
+    quality_fields:
+      - "quality_score"
+      - "confidence_score"
+      - "influence_strength_score"
+  routing:
+    required_for_intents:
+      - "create_campaign_pack"
+      - "generate_content_batch"
+    optional_for_intents:
+      - "revise_content_batch"
+      - "analyze_performance"
+    required_for_platforms: []
+    required_when: []
+    activation_rules: []
+    skip_rules: []
+    fallback_agent_id: "strategist"
+  execution:
+    supported_modes:
+      - "draft"
+      - "deep_work"
+      - "critic"
+      - "revision"
+      - "benchmark"
+    default_mode: "deep_work"
+    max_iterations: 3
+    timeout_seconds: 150
+    max_tool_calls: 6
+    context_budget: "high"
+    cost_tier: "standard"
+    parallel_safe: false
+  tools:
+    allowed:
+      - "strategy_reader"
+      - "audience_intelligence_reader"
+      - "positioning_reader"
+      - "proof_asset_reader"
+      - "performance_memory_reader"
+    forbidden:
+      - "file_writer"
+      - "publisher_api"
+      - "fake_proof_generator"
+      - "fake_engagement_generator"
+    usage_rules:
+      - "follow_agent_blueprint"
+      - "do_not_write_final_files_directly"
+      - "do_not_publish_directly"
+  memory:
+    reads:
+      - "brand_memory"
+      - "audience_memory"
+      - "decision_memory"
+      - "performance_memory"
+    writes:
+      - "influence_path_candidate"
+      - "belief_shift_candidate"
+      - "risk_note_candidate"
+    never_store:
+      - "unverified_claims_as_facts"
+      - "sensitive_personal_data"
+      - "manipulative_tactics_based_on_falsehood"
+  dependencies:
+    requires_before: []
+    should_run_after:
+      - "positioning_agent"
+    can_run_parallel_with:
+      - "creative_director"
+      - "video_agent"
+    conflicts_with: []
+  quality:
+    minimum_quality_score: 8
+    minimum_confidence_score: 7
+    rejection_conditions:
+      - "output_schema_invalid"
+      - "handoff_unusable"
+      - "fake_proof_or_fake_signal"
+    review_agent_id: "risk_reviewer"
+  guardrails:
+    global:
+      - "no_fake_proof"
+      - "no_fake_numbers"
+      - "no_fake_testimonials"
+      - "no_spam"
+      - "no_direct_publishing"
+      - "preserve_clean_intensity"
+    domain_specific:
+      - "respect_source_spec"
+      - "mark_hypotheses"
+      - "preserve_offensive_clean_version_when_valid"
+    red_flags:
+      - "unsupported_claims"
+      - "sensitive_personal_data"
+      - "platform_abuse"
+      - "over_sanitized_output"
+  observability:
+    trace_fields:
+      - "agent_id"
+      - "version"
+      - "job_id"
+      - "project_slug"
+      - "quality_score"
+      - "confidence_score"
+      - "influence_strength_score"
+      - "proof_dependency_score"
+      - "risk_score"
+    metrics:
+      - "belief_shift_reuse_rate"
+      - "influence_revision_rate"
+      - "proof_gap_count"
+      - "risk_escalation_count"
+  versioning:
+    current: "0.1.0"
+    compatible_output_versions:
+      - "InfluenceArchitecture.v0"
+    deprecated_by: ""
+    changelog:
+      -
+        version: "0.1.0"
+        date: "2026-05-13"
+        changes:
+          - "registry_entry_created_from_human_spec"

@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://crew-system.local/schemas/PerformanceReport.schema.json",
+  "title": "PerformanceReport",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "performance_report"
+  ],
+  "properties": {
+    "performance_report": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "self_evaluation": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "quality_score": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10
+        },
+        "confidence_score": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10
+        },
+        "weakest_point": {
+          "type": "string"
+        },
+        "next_improvement": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  "x-agent-id": "performance_analyst",
+  "x-status": "draft",
+  "x-notes": "Minimal runtime binding schema. Human source spec remains authoritative until strict schemas are implemented."
+}

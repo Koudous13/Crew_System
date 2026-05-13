@@ -1,0 +1,171 @@
+agent_registry_entry:
+  identity:
+    agent_id: "audience_psychologist"
+    name: "Audience Psychologist"
+    version: "0.1.0"
+    status: "draft"
+    type: "analyst"
+    owner_domain: "strategy"
+  source:
+    blueprint_path: "docs/agents/core/audience_psychologist.md"
+    prompt_path: "registry/prompts/audience_psychologist.system.txt"
+    schema_path: "registry/schemas/AudienceIntelligence.schema.json"
+    eval_path: "registry/evals/audience_psychologist.eval.yaml"
+    examples_path: ""
+    changelog_path: "docs/agents/core/audience_psychologist.md"
+  purpose:
+    mission: "Cartographier les douleurs visibles, douleurs cachees, desirs, peurs, besoins identitaires, objections et formulations declencheuses de l'audience afin que les campagnes semblent personnellement pertinentes."
+    primary_question: "Quelle tension humaine rend cette audience prete a faire attention, commenter, sauvegarder, partager ou agir ?"
+    success_definition: "La sortie donne aux agents suivants une matiere emotionnelle et linguistique assez forte pour creer hooks, positionnement, architecture d'influence et contenus. Elle ne doit pas adoucir la psychologie. Elle doit nommer les tensions dures : desir de statut, peur de rater, frustration cachee, besoin d'appartenance, jalousie concurrentielle, fatigue, honte sociale legere, ambition non avouee et contradiction intime quand ces leviers existent."
+  capabilities:
+    primary:
+      - "audience_psychology"
+    secondary:
+      - "emotional_tension_mapping"
+      - "trigger_language"
+    forbidden:
+      - "direct_publishing"
+      - "fake_proof_generation"
+      - "fake_engagement_generation"
+  ownership:
+    owns_sections:
+      - "audience_intelligence"
+      - "emotional_tension"
+    contributes_to_sections:
+      - "influence_architecture"
+      - "hooks"
+    does_not_own:
+      - "publication_directe"
+      - "validation_humaine_finale"
+  inputs:
+    required:
+      - "normalized_brief"
+      - "strategic_diagnosis"
+    optional:
+      - "customer_reviews"
+      - "previous_posts"
+      - "community_feedback"
+      - "performance_data"
+    context_requirements:
+      - "context_snapshot"
+      - "project_manifest_if_available"
+    missing_input_behavior:
+      - "mark_assumptions"
+      - "lower_confidence_score"
+      - "ask_user_if_blocking"
+  outputs:
+    produced_artifacts:
+      - "audience_intelligence"
+    schema_name: "AudienceIntelligence"
+    required_sections:
+      - "audience_intelligence"
+    quality_fields:
+      - "quality_score"
+      - "confidence_score"
+      - "specificity_score"
+  routing:
+    required_for_intents:
+      - "create_campaign_pack"
+      - "generate_content_batch"
+    optional_for_intents:
+      - "analyze_performance"
+    required_for_platforms: []
+    required_when: []
+    activation_rules: []
+    skip_rules: []
+    fallback_agent_id: "strategist"
+  execution:
+    supported_modes:
+      - "draft"
+      - "deep_work"
+      - "critic"
+      - "revision"
+    default_mode: "deep_work"
+    max_iterations: 3
+    timeout_seconds: 150
+    max_tool_calls: 6
+    context_budget: "high"
+    cost_tier: "standard"
+    parallel_safe: true
+  tools:
+    allowed:
+      - "brief_reader"
+      - "customer_review_reader"
+      - "previous_content_reader"
+      - "performance_report_reader"
+    forbidden:
+      - "file_writer"
+      - "sensitive_profile_inference"
+      - "fake_quote_generator"
+    usage_rules:
+      - "follow_agent_blueprint"
+      - "do_not_write_final_files_directly"
+      - "do_not_publish_directly"
+  memory:
+    reads:
+      - "audience_memory"
+      - "performance_memory"
+      - "community_feedback"
+    writes:
+      - "audience_insight_candidate"
+      - "trigger_phrase_candidate"
+      - "objection_candidate"
+    never_store:
+      - "sensitive_personal_data"
+      - "unverified_quotes_as_real"
+  dependencies:
+    requires_before: []
+    should_run_after:
+      - "strategist"
+    can_run_parallel_with: []
+    conflicts_with: []
+  quality:
+    minimum_quality_score: 8
+    minimum_confidence_score: 7
+    rejection_conditions:
+      - "output_schema_invalid"
+      - "handoff_unusable"
+      - "fake_proof_or_fake_signal"
+    review_agent_id: "anti_banality_agent"
+  guardrails:
+    global:
+      - "no_fake_proof"
+      - "no_fake_numbers"
+      - "no_fake_testimonials"
+      - "no_spam"
+      - "no_direct_publishing"
+      - "preserve_clean_intensity"
+    domain_specific:
+      - "respect_source_spec"
+      - "mark_hypotheses"
+      - "preserve_offensive_clean_version_when_valid"
+    red_flags:
+      - "unsupported_claims"
+      - "sensitive_personal_data"
+      - "platform_abuse"
+      - "over_sanitized_output"
+  observability:
+    trace_fields:
+      - "agent_id"
+      - "version"
+      - "job_id"
+      - "project_slug"
+      - "quality_score"
+      - "confidence_score"
+      - "specificity_score"
+      - "real_language_available"
+    metrics:
+      - "audience_specificity_score"
+      - "trigger_phrase_reuse_rate"
+      - "objection_accuracy_feedback"
+  versioning:
+    current: "0.1.0"
+    compatible_output_versions:
+      - "AudienceIntelligence.v0"
+    deprecated_by: ""
+    changelog:
+      -
+        version: "0.1.0"
+        date: "2026-05-13"
+        changes:
+          - "registry_entry_created_from_human_spec"

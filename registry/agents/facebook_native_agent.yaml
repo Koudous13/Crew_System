@@ -1,0 +1,195 @@
+agent_registry_entry:
+  identity:
+    agent_id: "facebook_native_agent"
+    name: "Facebook Native Agent"
+    version: "0.1.0"
+    status: "draft"
+    type: "creator"
+    owner_domain: "platform"
+  source:
+    blueprint_path: "docs/agents/platform/facebook_native_agent.md"
+    prompt_path: "registry/prompts/facebook_native_agent.system.txt"
+    schema_path: "registry/schemas/FacebookNativeStrategy.schema.json"
+    eval_path: "registry/evals/facebook_native_agent.eval.yaml"
+    examples_path: ""
+    changelog_path: "docs/agents/platform/facebook_native_agent.md"
+  purpose:
+    mission: "Adapter la strategie a Facebook de maniere native : conversation, proximite, emotion, preuve sociale defendable, visuels utiles, formats partageables et dynamique communautaire."
+    primary_question: "Comment faire vivre la strategie sur Facebook comme un contenu qui semble naturel dans le fil, donne envie de reagir, invite a discuter et renforce la confiance sans ressembler a un post LinkedIn recycle ?"
+    success_definition: "La sortie donne aux agents contenu une strategie Facebook claire : role de la plateforme, formats prioritaires, angles conversationnels, regles de ton, besoins visuels, limites a ne pas franchir et directions de publications compatibles avec l'influence architecture et le growth system. Elle doit exploiter pleinement Facebook : emotion, proximite, contradiction, histoires personnelles, conversations en commentaires, signaux communautaires, partages identitaires et CTA sociaux quand ils sont naturels."
+  capabilities:
+    primary:
+      - "platform_strategy_facebook"
+    secondary:
+      - "facebook_conversation_design"
+    forbidden:
+      - "direct_publishing"
+      - "fake_proof_generation"
+      - "fake_engagement_generation"
+  ownership:
+    owns_sections:
+      - "facebook_strategy"
+      - "facebook_posts"
+    contributes_to_sections:
+      - "content_units"
+      - "calendar"
+    does_not_own:
+      - "publication_directe"
+      - "validation_humaine_finale"
+  inputs:
+    required:
+      - "normalized_brief"
+      - "strategic_diagnosis"
+      - "audience_intelligence"
+      - "positioning"
+      - "influence_architecture"
+    optional:
+      - "growth_system"
+      - "annual_editorial_calendar"
+      - "visual_direction"
+      - "video_strategy"
+      - "content_batch_request"
+      - "performance_memory"
+      - "existing_facebook_assets"
+    context_requirements:
+      - "context_snapshot"
+      - "project_manifest_if_available"
+    missing_input_behavior:
+      - "mark_assumptions"
+      - "lower_confidence_score"
+      - "ask_user_if_blocking"
+  outputs:
+    produced_artifacts:
+      - "facebook_strategy"
+      - "facebook_content_directions"
+    schema_name: "FacebookNativeStrategy"
+    required_sections:
+      - "facebook_strategy"
+      - "facebook_content_directions"
+    quality_fields:
+      - "quality_score"
+      - "confidence_score"
+      - "platform_fit_score"
+  routing:
+    required_for_intents: []
+    optional_for_intents:
+      - "create_campaign_pack"
+      - "generate_content_batch"
+      - "generate_annual_calendar"
+    required_for_platforms:
+      - "facebook"
+    required_when: []
+    activation_rules: []
+    skip_rules: []
+    fallback_agent_id: "copywriter"
+  execution:
+    supported_modes:
+      - "draft"
+      - "deep_work"
+      - "revision"
+      - "critic"
+      - "benchmark"
+    default_mode: "deep_work"
+    max_iterations: 3
+    timeout_seconds: 180
+    max_tool_calls: 8
+    context_budget: "high"
+    cost_tier: "standard"
+    parallel_safe: true
+  tools:
+    allowed:
+      - "strategy_reader"
+      - "audience_intelligence_reader"
+      - "positioning_reader"
+      - "influence_architecture_reader"
+      - "growth_system_reader"
+      - "calendar_reader"
+      - "performance_memory_reader"
+      - "asset_reader"
+    forbidden:
+      - "publisher_api"
+      - "fake_engagement_generator"
+      - "fake_comment_generator"
+      - "group_spam_tool"
+    usage_rules:
+      - "follow_agent_blueprint"
+      - "do_not_write_final_files_directly"
+      - "do_not_publish_directly"
+  memory:
+    reads:
+      - "brand_memory"
+      - "audience_memory"
+      - "platform_memory"
+      - "performance_memory"
+    writes:
+      - "facebook_strategy_candidate"
+      - "facebook_format_rule"
+      - "facebook_conversation_signal"
+      - "facebook_risk_note"
+    never_store:
+      - "sensitive_personal_data"
+      - "fake_social_proof"
+      - "unverified_claims_as_facts"
+  dependencies:
+    requires_before: []
+    should_run_after:
+      - "influence_architect"
+    can_run_parallel_with:
+      - "linkedin_native_agent"
+      - "growth_hacker"
+    conflicts_with: []
+  quality:
+    minimum_quality_score: 8
+    minimum_confidence_score: 7
+    rejection_conditions:
+      - "output_schema_invalid"
+      - "handoff_unusable"
+      - "fake_proof_or_fake_signal"
+    review_agent_id: "anti_banality_agent"
+  guardrails:
+    global:
+      - "no_fake_proof"
+      - "no_fake_numbers"
+      - "no_fake_testimonials"
+      - "no_spam"
+      - "no_direct_publishing"
+      - "preserve_clean_intensity"
+    domain_specific:
+      - "respect_source_spec"
+      - "mark_hypotheses"
+      - "preserve_offensive_clean_version_when_valid"
+    red_flags:
+      - "unsupported_claims"
+      - "sensitive_personal_data"
+      - "platform_abuse"
+      - "over_sanitized_output"
+  observability:
+    trace_fields:
+      - "agent_id"
+      - "version"
+      - "job_id"
+      - "project_slug"
+      - "platform"
+      - "quality_score"
+      - "confidence_score"
+      - "platform_fit_score"
+      - "conversation_potential_score"
+      - "risk_control_score"
+    metrics:
+      - "facebook_directions_count"
+      - "conversation_triggers_count"
+      - "visual_required_count"
+      - "video_required_count"
+      - "rejected_engagement_bait_count"
+      - "platform_revision_rate"
+  versioning:
+    current: "0.1.0"
+    compatible_output_versions:
+      - "FacebookNativeStrategy.v0"
+    deprecated_by: ""
+    changelog:
+      -
+        version: "0.1.0"
+        date: "2026-05-13"
+        changes:
+          - "registry_entry_created_from_human_spec"

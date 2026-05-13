@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://crew-system.local/schemas/HookSet.schema.json",
+  "title": "HookSet",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "hook_set"
+  ],
+  "properties": {
+    "hook_set": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "self_evaluation": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "quality_score": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10
+        },
+        "confidence_score": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10
+        },
+        "weakest_point": {
+          "type": "string"
+        },
+        "next_improvement": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  "x-agent-id": "hook_master",
+  "x-status": "draft",
+  "x-notes": "Minimal runtime binding schema. Human source spec remains authoritative until strict schemas are implemented."
+}

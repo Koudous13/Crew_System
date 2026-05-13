@@ -1,0 +1,188 @@
+agent_registry_entry:
+  identity:
+    agent_id: "experimentation_agent"
+    name: "Experimentation Agent"
+    version: "0.1.0"
+    status: "draft"
+    type: "optimizer"
+    owner_domain: "experimentation"
+  source:
+    blueprint_path: "docs/agents/experimentation/experimentation_agent.md"
+    prompt_path: "registry/prompts/experimentation_agent.system.txt"
+    schema_path: "registry/schemas/ExperimentationPlan.schema.json"
+    eval_path: "registry/evals/experimentation_agent.eval.yaml"
+    examples_path: ""
+    changelog_path: "docs/agents/experimentation/experimentation_agent.md"
+  purpose:
+    mission: "Transformer strategie, growth system, contenus et performance en hypotheses testables, variantes, metriques, decisions et boucles d'apprentissage."
+    primary_question: "Que devons-nous tester maintenant pour apprendre vite sans casser la coherence, la confiance ou la plateforme ?"
+    success_definition: "La sortie donne un plan d'experiences priorisees, mesurables et actionnables, avec hypothese, variantes, metrique, seuils de decision, risques et apprentissage attendu. Elle doit tester des variantes vraiment differentes, pas seulement des variations timides. Un bon plan peut comparer angle safe, angle offensif propre, angle social, angle preuve, angle desir ou angle controverse defendable."
+  capabilities:
+    primary:
+      - "experimentation_design"
+    secondary:
+      - "ab_test_design"
+      - "learning_loop_design"
+    forbidden:
+      - "direct_publishing"
+      - "fake_proof_generation"
+      - "fake_engagement_generation"
+  ownership:
+    owns_sections:
+      - "experimentation_plan"
+    contributes_to_sections:
+      - "growth_system"
+      - "performance_report"
+    does_not_own:
+      - "publication_directe"
+      - "validation_humaine_finale"
+  inputs:
+    required:
+      - "strategic_diagnosis"
+      - "audience_intelligence"
+      - "positioning"
+      - "growth_system"
+    optional:
+      - "influence_architecture"
+      - "platform_strategy"
+      - "annual_editorial_calendar"
+      - "hook_set"
+      - "content_units"
+      - "performance_report"
+      - "performance_memory"
+      - "risk_review"
+    context_requirements:
+      - "context_snapshot"
+      - "project_manifest_if_available"
+    missing_input_behavior:
+      - "mark_assumptions"
+      - "lower_confidence_score"
+      - "ask_user_if_blocking"
+  outputs:
+    produced_artifacts:
+      - "experimentation_plan"
+    schema_name: "ExperimentationPlan"
+    required_sections:
+      - "experimentation_plan"
+    quality_fields:
+      - "quality_score"
+      - "confidence_score"
+      - "measurability_score"
+  routing:
+    required_for_intents: []
+    optional_for_intents:
+      - "create_campaign_pack"
+      - "generate_content_batch"
+      - "analyze_performance"
+    required_for_platforms: []
+    required_when: []
+    activation_rules:
+      - "ab_tests requested"
+      - "performance_analysis requested"
+      - "campaign_pack requires experiments"
+    skip_rules: []
+    fallback_agent_id: "growth_hacker"
+  execution:
+    supported_modes:
+      - "draft"
+      - "deep_work"
+      - "revision"
+      - "critic"
+      - "benchmark"
+    default_mode: "deep_work"
+    max_iterations: 3
+    timeout_seconds: 180
+    max_tool_calls: 8
+    context_budget: "medium"
+    cost_tier: "standard"
+    parallel_safe: true
+  tools:
+    allowed:
+      - "growth_system_reader"
+      - "strategy_reader"
+      - "platform_strategy_reader"
+      - "content_unit_reader"
+      - "hook_set_reader"
+      - "performance_memory_reader"
+      - "risk_review_reader"
+    forbidden:
+      - "publisher_api"
+      - "fake_engagement_generator"
+      - "spam_automation_tool"
+    usage_rules:
+      - "follow_agent_blueprint"
+      - "do_not_write_final_files_directly"
+      - "do_not_publish_directly"
+  memory:
+    reads:
+      - "performance_memory"
+      - "decision_memory"
+      - "platform_memory"
+    writes:
+      - "experiment_candidate"
+      - "decision_rule_candidate"
+      - "learning_objective"
+    never_store:
+      - "sensitive_personal_data"
+      - "unverified_claims_as_facts"
+      - "fake_engagement"
+  dependencies:
+    requires_before: []
+    should_run_after:
+      - "growth_hacker"
+    can_run_parallel_with:
+      - "hook_master"
+      - "creative_director"
+    conflicts_with: []
+  quality:
+    minimum_quality_score: 8
+    minimum_confidence_score: 7
+    rejection_conditions:
+      - "output_schema_invalid"
+      - "handoff_unusable"
+      - "fake_proof_or_fake_signal"
+    review_agent_id: "performance_analyst"
+  guardrails:
+    global:
+      - "no_fake_proof"
+      - "no_fake_numbers"
+      - "no_fake_testimonials"
+      - "no_spam"
+      - "no_direct_publishing"
+      - "preserve_clean_intensity"
+    domain_specific:
+      - "respect_source_spec"
+      - "mark_hypotheses"
+      - "preserve_offensive_clean_version_when_valid"
+    red_flags:
+      - "unsupported_claims"
+      - "sensitive_personal_data"
+      - "platform_abuse"
+      - "over_sanitized_output"
+  observability:
+    trace_fields:
+      - "agent_id"
+      - "version"
+      - "job_id"
+      - "project_slug"
+      - "experiments_count"
+      - "quality_score"
+      - "measurability_score"
+      - "learning_value_score"
+    metrics:
+      - "experiments_created"
+      - "experiments_rejected"
+      - "tests_with_primary_metric"
+      - "tests_with_kill_criteria"
+      - "inconclusive_test_rate"
+  versioning:
+    current: "0.1.0"
+    compatible_output_versions:
+      - "ExperimentationPlan.v0"
+    deprecated_by: ""
+    changelog:
+      -
+        version: "0.1.0"
+        date: "2026-05-13"
+        changes:
+          - "registry_entry_created_from_human_spec"

@@ -1,0 +1,32 @@
+quality_gates:
+  schema_gate:
+    purpose: "verifier que la sortie respecte le schema lie a l agent"
+    required: true
+  context_gate:
+    purpose: "verifier que les inputs requis sont disponibles ou marques comme hypotheses"
+    required: true
+  strategic_alignment_gate:
+    purpose: "verifier coherence avec positionnement et calendrier"
+    required: true
+  intensity_preservation_gate:
+    purpose: "verifier que les revisions ne neutralisent pas psychologie, influence ou growth"
+    required: true
+  anti_banality_gate:
+    purpose: "rejeter les sorties generiques ou trop lissees"
+    required: true
+  risk_gate:
+    purpose: "detecter faux claims, preuves faibles, tactiques interdites et risques non assumes"
+    required: true
+  handoff_gate:
+    purpose: "verifier que la sortie peut etre utilisee par l agent suivant"
+    required: true
+minimum_scores:
+  quality_score: 8
+  confidence_score: 7
+failure_policy:
+  schema_invalid: "retry_or_revise"
+  context_missing: "ask_user_or_stop"
+  output_generic: "revise_with_anti_banality_agent"
+  output_over_sanitized: "restore_clean_intensity"
+  risk_high: "send_to_risk_reviewer"
+  fake_proof_or_fake_signal: "reject_output"

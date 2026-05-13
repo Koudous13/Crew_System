@@ -1,0 +1,194 @@
+agent_registry_entry:
+  identity:
+    agent_id: "risk_reviewer"
+    name: "Risk Reviewer"
+    version: "0.1.0"
+    status: "draft"
+    type: "reviewer"
+    owner_domain: "risk"
+  source:
+    blueprint_path: "docs/agents/risk/risk_reviewer.md"
+    prompt_path: "registry/prompts/risk_reviewer.system.txt"
+    schema_path: "registry/schemas/RiskReview.schema.json"
+    eval_path: "registry/evals/risk_reviewer.eval.yaml"
+    examples_path: ""
+    changelog_path: "docs/agents/risk/risk_reviewer.md"
+  purpose:
+    mission: "Identifier les risques de promesse, preuve, reputation, plateforme, ethique, sensibilite audience et claims avant validation ou livraison."
+    primary_question: "Cette sortie peut-elle nuire a la confiance, violer une limite, promettre trop, manquer de preuve ou exposer le projet a un risque inutile ?"
+    success_definition: "La sortie donne une decision claire : pass, revise ou block, avec risques, severite, raisons, corrections requises et alternatives plus sures."
+  capabilities:
+    primary:
+      - "risk_review"
+    secondary:
+      - "claim_review"
+      - "safer_alternative_design"
+    forbidden:
+      - "direct_publishing"
+      - "fake_proof_generation"
+      - "fake_engagement_generation"
+  ownership:
+    owns_sections:
+      - "risk_review"
+    contributes_to_sections:
+      - "final_readiness"
+    does_not_own:
+      - "publication_directe"
+      - "validation_humaine_finale"
+  inputs:
+    required:
+      - "artifact_to_review"
+      - "positioning"
+      - "proof_assets"
+    optional:
+      - "strategic_diagnosis"
+      - "audience_intelligence"
+      - "influence_architecture"
+      - "growth_system"
+      - "platform_strategy"
+      - "content_units"
+      - "visual_briefs"
+      - "video_plan"
+      - "previous_risk_reviews"
+    context_requirements:
+      - "context_snapshot"
+      - "project_manifest_if_available"
+    missing_input_behavior:
+      - "mark_assumptions"
+      - "lower_confidence_score"
+      - "ask_user_if_blocking"
+  outputs:
+    produced_artifacts:
+      - "risk_review"
+    schema_name: "RiskReview"
+    required_sections:
+      - "risk_review"
+    quality_fields:
+      - "quality_score"
+      - "confidence_score"
+      - "risk_detection_score"
+  routing:
+    required_for_intents: []
+    optional_for_intents:
+      - "create_campaign_pack"
+      - "generate_content_batch"
+      - "revise_content_batch"
+      - "generate_video_batch"
+    required_for_platforms: []
+    required_when:
+      - "claims_present"
+      - "high_aggression_level"
+      - "sensitive_topic"
+      - "reputation_risk"
+    activation_rules:
+      - "claims_present"
+      - "risk_score > 5"
+      - "aggression_level == high"
+      - "sensitive_topic is true"
+    skip_rules:
+      - "low risk"
+      - "no claims"
+      - "no sensitive topic"
+    fallback_agent_id: ""
+  execution:
+    supported_modes:
+      - "review"
+      - "critic"
+      - "final_gate"
+      - "revision"
+    default_mode: "review"
+    max_iterations: 2
+    timeout_seconds: 150
+    max_tool_calls: 8
+    context_budget: "high"
+    cost_tier: "standard"
+    parallel_safe: true
+  tools:
+    allowed:
+      - "artifact_reader"
+      - "proof_asset_reader"
+      - "positioning_reader"
+      - "influence_architecture_reader"
+      - "growth_system_reader"
+      - "platform_strategy_reader"
+      - "previous_risk_review_reader"
+    forbidden:
+      - "publisher_api"
+      - "legal_final_advice_tool"
+      - "fake_proof_generator"
+    usage_rules:
+      - "follow_agent_blueprint"
+      - "do_not_write_final_files_directly"
+      - "do_not_publish_directly"
+  memory:
+    reads:
+      - "decision_memory"
+      - "risk_memory"
+      - "proof_memory"
+    writes:
+      - "risk_pattern"
+      - "blocked_claim"
+      - "safer_alternative"
+    never_store:
+      - "sensitive_personal_data"
+      - "unverified_claims_as_facts"
+      - "private_user_data"
+  dependencies:
+    requires_before: []
+    should_run_after:
+      - "content_or_strategy_generated"
+    can_run_parallel_with:
+      - "anti_banality_agent"
+    conflicts_with: []
+  quality:
+    minimum_quality_score: 8
+    minimum_confidence_score: 7
+    rejection_conditions:
+      - "output_schema_invalid"
+      - "handoff_unusable"
+      - "fake_proof_or_fake_signal"
+    review_agent_id: ""
+  guardrails:
+    global:
+      - "no_fake_proof"
+      - "no_fake_numbers"
+      - "no_fake_testimonials"
+      - "no_spam"
+      - "no_direct_publishing"
+      - "preserve_clean_intensity"
+    domain_specific:
+      - "respect_source_spec"
+      - "mark_hypotheses"
+      - "preserve_offensive_clean_version_when_valid"
+    red_flags:
+      - "unsupported_claims"
+      - "sensitive_personal_data"
+      - "platform_abuse"
+      - "over_sanitized_output"
+  observability:
+    trace_fields:
+      - "agent_id"
+      - "version"
+      - "job_id"
+      - "project_slug"
+      - "artifact_id"
+      - "decision"
+      - "risk_level"
+      - "confidence_score"
+    metrics:
+      - "reviews_count"
+      - "block_rate"
+      - "human_review_required_count"
+      - "unsupported_claim_count"
+      - "risk_recurrence_count"
+  versioning:
+    current: "0.1.0"
+    compatible_output_versions:
+      - "RiskReview.v0"
+    deprecated_by: ""
+    changelog:
+      -
+        version: "0.1.0"
+        date: "2026-05-13"
+        changes:
+          - "registry_entry_created_from_human_spec"

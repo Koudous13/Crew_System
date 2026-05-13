@@ -1,0 +1,185 @@
+agent_registry_entry:
+  identity:
+    agent_id: "hook_master"
+    name: "Hook Master"
+    version: "0.1.0"
+    status: "draft"
+    type: "creator"
+    owner_domain: "content"
+  source:
+    blueprint_path: "docs/agents/content/hook_master.md"
+    prompt_path: "registry/prompts/hook_master.system.txt"
+    schema_path: "registry/schemas/HookSet.schema.json"
+    eval_path: "registry/evals/hook_master.eval.yaml"
+    examples_path: ""
+    changelog_path: "docs/agents/content/hook_master.md"
+  purpose:
+    mission: "Creer, scorer et selectionner les accroches qui ouvrent les contenus : attention, tension, curiosite, identification, contradiction, preuve ou desir."
+    primary_question: "Quelle accroche donne a l'audience une raison immediate de s'arreter, sans trahir la strategie ni promettre plus que le contenu ne peut livrer ?"
+    success_definition: "La sortie donne au copywriter un set d'accroches classees, justifiees et adaptees a la plateforme, au format, a l'objectif psychologique et au niveau de risque acceptable. Elle doit oser les accroches a tension forte : contraste, contradiction, statut, confession, erreur couteuse, desir cache, croyance inconfortable et curiosite nette."
+  capabilities:
+    primary:
+      - "hook_generation"
+    secondary:
+      - "hook_scoring"
+    forbidden:
+      - "direct_publishing"
+      - "fake_proof_generation"
+      - "fake_engagement_generation"
+  ownership:
+    owns_sections:
+      - "hooks"
+    contributes_to_sections:
+      - "content_units"
+      - "video_scripts"
+    does_not_own:
+      - "publication_directe"
+      - "validation_humaine_finale"
+  inputs:
+    required:
+      - "strategic_diagnosis"
+      - "audience_intelligence"
+      - "positioning"
+      - "influence_architecture"
+      - "platform_strategy"
+      - "content_batch_request"
+    optional:
+      - "annual_editorial_calendar"
+      - "growth_system"
+      - "content_angle"
+      - "proof_assets"
+      - "previous_hook_performance"
+      - "risk_review"
+    context_requirements:
+      - "context_snapshot"
+      - "project_manifest_if_available"
+    missing_input_behavior:
+      - "mark_assumptions"
+      - "lower_confidence_score"
+      - "ask_user_if_blocking"
+  outputs:
+    produced_artifacts:
+      - "hook_set"
+    schema_name: "HookSet"
+    required_sections:
+      - "hook_set"
+    quality_fields:
+      - "quality_score"
+      - "confidence_score"
+      - "attention_strength_score"
+  routing:
+    required_for_intents:
+      - "generate_content_batch"
+    optional_for_intents:
+      - "revise_content_batch"
+      - "generate_video_batch"
+    required_for_platforms: []
+    required_when: []
+    activation_rules: []
+    skip_rules: []
+    fallback_agent_id: "copywriter"
+  execution:
+    supported_modes:
+      - "draft"
+      - "deep_work"
+      - "revision"
+      - "critic"
+      - "benchmark"
+    default_mode: "deep_work"
+    max_iterations: 3
+    timeout_seconds: 120
+    max_tool_calls: 6
+    context_budget: "medium"
+    cost_tier: "standard"
+    parallel_safe: true
+  tools:
+    allowed:
+      - "audience_intelligence_reader"
+      - "positioning_reader"
+      - "influence_architecture_reader"
+      - "platform_strategy_reader"
+      - "calendar_reader"
+      - "performance_memory_reader"
+      - "proof_asset_reader"
+    forbidden:
+      - "publisher_api"
+      - "fake_proof_generator"
+      - "fake_result_generator"
+    usage_rules:
+      - "follow_agent_blueprint"
+      - "do_not_write_final_files_directly"
+      - "do_not_publish_directly"
+  memory:
+    reads:
+      - "audience_memory"
+      - "platform_memory"
+      - "performance_memory"
+    writes:
+      - "hook_candidate"
+      - "hook_family_learning"
+      - "rejected_hook_reason"
+    never_store:
+      - "unverified_claims_as_facts"
+      - "sensitive_personal_data"
+  dependencies:
+    requires_before: []
+    should_run_after:
+      - "calendar_architect"
+      - "audience_psychologist"
+    can_run_parallel_with:
+      - "creative_director"
+      - "video_agent"
+    conflicts_with: []
+  quality:
+    minimum_quality_score: 8
+    minimum_confidence_score: 7
+    rejection_conditions:
+      - "output_schema_invalid"
+      - "handoff_unusable"
+      - "fake_proof_or_fake_signal"
+    review_agent_id: "anti_banality_agent"
+  guardrails:
+    global:
+      - "no_fake_proof"
+      - "no_fake_numbers"
+      - "no_fake_testimonials"
+      - "no_spam"
+      - "no_direct_publishing"
+      - "preserve_clean_intensity"
+    domain_specific:
+      - "respect_source_spec"
+      - "mark_hypotheses"
+      - "preserve_offensive_clean_version_when_valid"
+    red_flags:
+      - "unsupported_claims"
+      - "sensitive_personal_data"
+      - "platform_abuse"
+      - "over_sanitized_output"
+  observability:
+    trace_fields:
+      - "agent_id"
+      - "version"
+      - "job_id"
+      - "project_slug"
+      - "platform"
+      - "hooks_generated"
+      - "quality_score"
+      - "attention_strength_score"
+      - "truthfulness_score"
+    metrics:
+      - "hooks_generated_count"
+      - "hooks_rejected_count"
+      - "average_attention_score"
+      - "average_truthfulness_score"
+      - "selected_hook_revision_rate"
+  versioning:
+    current: "0.1.0"
+    compatible_output_versions:
+      - "HookSet.v0"
+    deprecated_by: ""
+    changelog:
+      -
+        version: "0.1.0"
+        date: "2026-05-13"
+        changes:
+          - "registry_entry_created_from_human_spec"
