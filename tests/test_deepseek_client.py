@@ -59,6 +59,7 @@ class DeepSeekClientTest(unittest.TestCase):
         self.assertEqual(settings.max_tokens, 1234)
         self.assertEqual(settings.temperature, 0.2)
         self.assertTrue(settings.thinking_enabled)
+        self.assertIsNone(DeepSeekSettings.from_env({ENV_DEEPSEEK_API_KEY: "sk-test"}).max_tokens)
 
     def test_dotenv_parser_supports_local_secret_file_without_printing_key(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -114,8 +115,38 @@ class DeepSeekClientTest(unittest.TestCase):
         self.assertEqual(server.last_payload["model"], DEFAULT_DEEPSEEK_MODEL)
         self.assertEqual(server.last_payload["response_format"], {"type": "json_object"})
         self.assertEqual(server.last_payload["thinking"], {"type": "disabled"})
+        self.assertNotIn("max_tokens", server.last_payload)
         self.assertIn("json", server.last_payload["messages"][0]["content"].lower())
         self.assertNotIn("not duplicated", server.last_payload["messages"][1]["content"])
+
+    def test_client_sends_max_tokens_only_when_explicitly_configured(self) -> None:
+        server = RecordingServer(
+            response_payload={
+                "choices": [
+                    {
+                        "finish_reason": "stop",
+                        "message": {"content": json.dumps(valid_growth_payload())},
+                    }
+                ]
+            }
+        )
+        with server.running() as base_url:
+            client = DeepSeekJsonClient(
+                DeepSeekSettings(
+                    api_key="sk-test",
+                    base_url=base_url,
+                    timeout_seconds=5,
+                    max_tokens=1234,
+                )
+            )
+
+            client.generate_json(
+                system_prompt="Tu es growth_hacker.",
+                input_payload={"request_id": "req_1"},
+                output_schema=growth_schema(),
+            )
+
+        self.assertEqual(server.last_payload["max_tokens"], 1234)
 
     def test_deepseek_runner_factory_integrates_with_llm_runner(self) -> None:
         server = RecordingServer(

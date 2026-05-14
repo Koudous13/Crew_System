@@ -121,9 +121,11 @@ class JobPlanner:
         self,
         request: NormalizedRequest,
         context: ContextSnapshot | None = None,
+        *,
+        job_id: str | None = None,
     ) -> JobPlan:
         project_slug = request.project_ref.project_slug if request.project_ref else GLOBAL_RUNTIME_PROJECT_SLUG
-        job_id = new_job_id()
+        job_id = job_id or new_job_id()
         graph_id = f"graph_{job_id}"
         blocked_reasons = blocking_reasons_for(request, context)
         now = utc_now()
@@ -206,7 +208,7 @@ class JobPlanner:
                 job_id=job_id,
                 task_type=TaskType.FILE_WRITE,
                 depends_on=["quality_gate"],
-                output_artifacts=expected_artifacts_for(job_type, job_id),
+                output_artifacts=expected_artifacts_for(job_type, job_id, request.intent.platforms),
                 reason="persist approved outputs with safe writer policies",
             )
         )
@@ -220,7 +222,7 @@ class JobPlanner:
             updated_at=now,
             task_graph_id=graph_id,
             status=JobStatus.QUEUED,
-            expected_artifacts=expected_artifacts_for(job_type, job_id),
+            expected_artifacts=expected_artifacts_for(job_type, job_id, request.intent.platforms),
             limits=JobLimits(max_agent_runs=max(len(selected_agents) + 2, 1)),
         )
 
@@ -383,7 +385,7 @@ def job_type_for_intent(intent_type: IntentType) -> JobType:
     return mapping[intent_type]
 
 
-def expected_artifacts_for(job_type: JobType, job_id: str) -> list[str]:
+def expected_artifacts_for(job_type: JobType, job_id: str, platforms: list[Platform] | None = None) -> list[str]:
     if job_type is JobType.PROJECT_BOOTSTRAP:
         return ["brief/normalized_brief.json", "memory/project_file_plan.json"]
     if job_type is JobType.CAMPAIGN_PACK:
@@ -394,19 +396,29 @@ def expected_artifacts_for(job_type: JobType, job_id: str) -> list[str]:
             "strategy/positioning.md",
             "strategy/influence_architecture.md",
             "strategy/growth_system.md",
+            "platforms/facebook_strategy.md",
+            "platforms/linkedin_strategy.md",
         ]
     if job_type is JobType.ANNUAL_CALENDAR:
         return ["calendar/annual_editorial_calendar.md", "calendar/annual_editorial_calendar.json"]
     if job_type is JobType.CONTENT_BATCH:
+        ready_file = content_ready_filename(platforms or [])
         return [
             f"outputs/batches/{job_id}/content_batch.md",
             f"outputs/batches/{job_id}/content_batch.json",
+            f"outputs/batches/{job_id}/{ready_file}",
         ]
     if job_type is JobType.REVISION:
         return [f"outputs/revisions/{job_id}/revision.md", f"outputs/revisions/{job_id}/revision.json"]
     if job_type is JobType.ANALYSIS:
         return [f"performance/reports/{job_id}/analysis.md", f"performance/reports/{job_id}/analysis.json"]
     return [f"logs/jobs/{job_id}/runtime_report.json"]
+
+
+def content_ready_filename(platforms: list[Platform]) -> str:
+    if len(platforms) == 1:
+        return f"{platforms[0].value}_posts_ready.md"
+    return "posts_ready.md"
 
 
 def should_read_optional_routes(request: NormalizedRequest) -> bool:

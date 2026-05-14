@@ -115,16 +115,21 @@ class WorkspaceEngineTest(unittest.TestCase):
             self.assertEqual(project_ref.project_slug, "coach_saas")
             self.assertTrue((project_root / "manifest.json").exists())
             self.assertTrue((project_root / "README.md").exists())
+            self.assertTrue((project_root / "brief/normalized_brief.json").exists())
             self.assertTrue((project_root / "strategy").is_dir())
             self.assertTrue((project_root / "outputs/batches").is_dir())
             self.assertTrue((project_root / "logs/jobs.jsonl").exists())
             self.assertTrue((project_root / "logs/decisions.md").exists())
+            normalized_brief = json.loads((project_root / "brief/normalized_brief.json").read_text(encoding="utf-8"))
 
             project_manifest = engine.load_project_manifest("coach_saas")
             workspace_manifest = engine.load_workspace_manifest()
 
             self.assertEqual(project_manifest.project_name, "Coach SaaS")
             self.assertEqual(project_manifest.current_state["strategy_ready"], False)
+            self.assertEqual(normalized_brief["project_slug"], "coach_saas")
+            self.assertEqual(normalized_brief["description"], "Strategie de croissance pour coachs.")
+            self.assertEqual(normalized_brief["active_platforms"], ["facebook", "linkedin"])
             self.assertIn("coach_saas", workspace_manifest.active_projects)
 
     def test_project_slug_collision_is_resolved(self) -> None:

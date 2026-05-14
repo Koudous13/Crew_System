@@ -233,6 +233,18 @@ class WorkspaceEngine:
             mode=WriteMode.CREATE,
         )
         project_writer.write_text(
+            "brief/normalized_brief.json",
+            normalized_brief_seed(
+                project_name=project_name,
+                project_slug=slug,
+                description=description,
+                owner=owner,
+                active_platforms=manifest.active_platforms,
+            ),
+            job_id="project_init",
+            mode=WriteMode.CREATE,
+        )
+        project_writer.write_text(
             "logs/decisions.md",
             f"# Decisions - {project_name}\n\n",
             job_id="project_init",
@@ -501,6 +513,35 @@ def project_readme(project_name: str, description: str) -> str:
         "- strategy_ready: false\n"
         "- calendar_ready: false\n"
     )
+
+
+def normalized_brief_seed(
+    *,
+    project_name: str,
+    project_slug: str,
+    description: str,
+    owner: str,
+    active_platforms: list[str],
+) -> str:
+    payload = {
+        "active_platforms": active_platforms,
+        "created_at": utc_now(),
+        "description": description,
+        "input_quality": "seed_from_project_creation",
+        "known_constraints": [],
+        "missing_details": [
+            "audience exacte",
+            "offre",
+            "preuve disponible",
+            "ton de marque",
+            "objectifs commerciaux",
+        ],
+        "owner": owner,
+        "project_name": project_name,
+        "project_slug": project_slug,
+        "source": "create_project",
+    }
+    return json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n"
 
 
 def archive_path_for(artifact_id: str, original_path: Path) -> str:

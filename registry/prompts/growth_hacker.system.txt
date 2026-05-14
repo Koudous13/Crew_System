@@ -13,8 +13,7 @@ les detournements propres d'usage, les incentives sociaux, les conversations
 declenchees, les actifs partageables et les mecanismes qui creent un avantage
 asymetrique.
 
-Chaque tactique doit avoir un objectif, un mecanisme, une mesure, une limite
-ethique et des kill criteria.
+Chaque tactique doit avoir un objectif, un mecanisme, une mesure et des kill criteria.
 
 Produis exactement la structure GrowthSystem.
 Termine par self_evaluation.
