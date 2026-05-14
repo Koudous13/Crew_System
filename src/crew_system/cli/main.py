@@ -7,7 +7,8 @@ from pathlib import Path
 from typing import Any, Iterable, Mapping
 
 from crew_system import __version__
-from crew_system.agents import AgentRunner, MockAgentRunner, deepseek_agent_runner_from_env
+from crew_system.agents import AgentRunner
+from crew_system.agents.providers import runner_for_provider as build_runner_for_provider
 from crew_system.config import CrewSystemSettings
 from crew_system.filesystem import WorkspaceEngine
 from crew_system.jobs import JobStore, JobStoreError, LocalWorker
@@ -74,6 +75,20 @@ def build_parser() -> argparse.ArgumentParser:
     job_status.add_argument("--project", required=True, help="Project slug.")
     add_runtime_options(job_status)
     job_status.set_defaults(handler=run_job_status)
+
+    api = subparsers.add_parser("api", help="Local API commands.")
+    api_subparsers = api.add_subparsers(dest="api_command")
+    api_serve = api_subparsers.add_parser("serve", help="Serve the local Crew_System HTTP API.")
+    api_serve.add_argument("--host", default="127.0.0.1", help="API host.")
+    api_serve.add_argument("--port", type=int, default=8765, help="API port.")
+    api_serve.add_argument(
+        "--provider",
+        choices=["auto", "mock", "deepseek"],
+        default="auto",
+        help="Default API runner provider.",
+    )
+    add_runtime_options(api_serve)
+    api_serve.set_defaults(handler=run_api_serve)
 
     run = subparsers.add_parser("run", help="Run a local job.")
     run_subparsers = run.add_subparsers(dest="run_command")
@@ -198,6 +213,35 @@ def run_job_status(args: argparse.Namespace) -> int:
     return 0
 
 
+def run_api_serve(args: argparse.Namespace) -> int:
+    from crew_system.api import serve_api
+
+    settings, workspace_root = runtime_settings(args)
+    if args.json:
+        print(
+            json.dumps(
+                {
+                    "ok": True,
+                    "url": f"http://{args.host}:{args.port}",
+                    "workspace_root": str(workspace_root),
+                    "provider": args.provider,
+                },
+                indent=2,
+                sort_keys=True,
+            ),
+            flush=True,
+        )
+    else:
+        print(f"Crew_System API: http://{args.host}:{args.port}", flush=True)
+    return serve_api(
+        repo_root=settings.repo_root,
+        workspace_root=workspace_root,
+        host=args.host,
+        port=args.port,
+        default_provider=args.provider,
+    )
+
+
 def run_local_job(args: argparse.Namespace) -> int:
     settings, workspace_root = runtime_settings(args)
     try:
@@ -253,14 +297,7 @@ def runner_for_provider(
     *,
     env: Mapping[str, str] | None = None,
 ) -> tuple[AgentRunner, str]:
-    if use_mock or provider == "mock":
-        return MockAgentRunner(), "mock"
-    if provider == "deepseek":
-        return deepseek_agent_runner_from_env(env), "deepseek"
-    try:
-        return deepseek_agent_runner_from_env(env), "deepseek"
-    except DeepSeekConfigurationError:
-        return MockAgentRunner(), "mock"
+    return build_runner_for_provider(provider, use_mock, env=env)
 
 
 def build_doctor_payload(settings: CrewSystemSettings) -> dict[str, Any]:

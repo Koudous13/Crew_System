@@ -777,6 +777,25 @@ Gates de sortie :
 - les artifacts sont accessibles ;
 - la validation humaine est explicite.
 
+Implementation actuelle :
+
+- service local `ChatApiService` ;
+- serveur HTTP standard library `crew_system.api.server` ;
+- commande `crew-system api serve` ;
+- endpoint sante `GET /health` ;
+- creation projet `POST /projects` ;
+- conversations `POST /conversations`, `GET /conversations/{conversation_id}` ;
+- messages chat `POST /conversations/{conversation_id}/messages` ;
+- jobs `POST /jobs`, `GET /jobs`, `GET /jobs/{project_slug}/{job_id}` ;
+- progression `GET /jobs/{project_slug}/{job_id}/events` ;
+- streaming SSE `GET /jobs/{project_slug}/{job_id}/events/stream` ;
+- annulation `POST /jobs/{project_slug}/{job_id}/cancel` ;
+- artefacts `GET /artifacts`, `GET /artifact` ;
+- validation humaine `POST /artifacts/validate` ;
+- validations humaines `GET /validations` ;
+- revision `POST /artifacts/revise` ;
+- provider reel disponible via `auto` ou `deepseek`, mock reserve aux tests.
+
 ## Phase 14 - Construire L'Interface Chat
 
 Objectif :

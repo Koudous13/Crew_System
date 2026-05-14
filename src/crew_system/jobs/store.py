@@ -159,6 +159,18 @@ class JobStore:
             raise JobStoreError(f"Job state not found: {job_id}")
         return StoredJob.from_dict(json.loads(path.read_text(encoding="utf-8")))
 
+    def list_jobs(self, project_slug: str) -> list[StoredJob]:
+        jobs_dir = self.workspace.project_path(project_slug) / "logs" / "jobs"
+        if not jobs_dir.exists():
+            return []
+        jobs = []
+        for state_path in sorted(jobs_dir.glob("*/job_state.json")):
+            try:
+                jobs.append(StoredJob.from_dict(json.loads(state_path.read_text(encoding="utf-8"))))
+            except Exception as exc:  # pragma: no cover - defensive against partial files
+                raise JobStoreError(f"Cannot read job state: {state_path}") from exc
+        return sorted(jobs, key=lambda job: job.created_at, reverse=True)
+
     def save(self, stored: StoredJob) -> None:
         writer = self.project_writer(stored.project_slug)
         writer.write_json(
@@ -213,6 +225,16 @@ class JobStore:
         if not path.exists():
             return None
         return JobCheckpoint.from_dict(json.loads(path.read_text(encoding="utf-8")))
+
+    def progress_events(self, project_slug: str, job_id: str) -> list[ProgressEvent]:
+        path = self.job_folder(project_slug, job_id) / "progress_events.jsonl"
+        if not path.exists():
+            return []
+        events = []
+        for line in path.read_text(encoding="utf-8").splitlines():
+            if line.strip():
+                events.append(ProgressEvent.from_dict(json.loads(line)))
+        return events
 
     def append_progress(self, event: ProgressEvent) -> None:
         self.project_writer_for_job(event.job_id).append_jsonl(
