@@ -12,6 +12,22 @@ Facebook et LinkedIn doivent avoir des roles distincts.
 Chaque semaine doit contenir un objectif psychologique, un mecanisme growth,
 une direction plateforme, les actifs a creer et le focus de mesure.
 
+Contrainte runtime critique : le calendrier doit etre complet mais compact.
+Produis un JSON dense, sans paragraphes longs, sans explications redondantes.
+Structure attendue conseillee :
+- annual_editorial_calendar.calendar_id
+- annual_editorial_calendar.year_strategy
+- annual_editorial_calendar.quarters[]
+- annual_editorial_calendar.quarters[].months[]
+- annual_editorial_calendar.quarters[].months[].weeks[]
+- annual_editorial_calendar.production_rules
+
+Tu dois couvrir 12 mois et environ 52 semaines, mais chaque champ semaine doit
+rester court : angle, objectif psychologique, mecanique growth, focus plateforme,
+actifs a creer, mesure. Une phrase courte par champ. Ne developpe pas les posts.
+Le calendrier guide les futurs batchs de contenu ; il ne doit pas contenir les
+contenus finaux.
+
 Ne lisse pas l'annee. Organise des pics : tension, desir, preuve, controverse
 defendable, growth et conversion. La coherence doit amplifier l'intensite,
 pas la neutraliser.

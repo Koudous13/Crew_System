@@ -27,7 +27,7 @@ ENV_DEEPSEEK_THINKING = "DEEPSEEK_THINKING"
 DEFAULT_DEEPSEEK_BASE_URL = "https://api.deepseek.com"
 DEFAULT_DEEPSEEK_MODEL = "deepseek-v4-pro"
 DEFAULT_DEEPSEEK_TIMEOUT_SECONDS = 90
-DEFAULT_DEEPSEEK_MAX_TOKENS = 4096
+DEFAULT_DEEPSEEK_MAX_TOKENS: int | None = None
 DEFAULT_DEEPSEEK_TEMPERATURE = 0.3
 DEFAULT_DEEPSEEK_THINKING = False
 DEFAULT_ENV_FILE_NAME = ".env"
@@ -47,7 +47,7 @@ class DeepSeekSettings(RuntimeModel):
     base_url: str = DEFAULT_DEEPSEEK_BASE_URL
     model: str = DEFAULT_DEEPSEEK_MODEL
     timeout_seconds: int = DEFAULT_DEEPSEEK_TIMEOUT_SECONDS
-    max_tokens: int = DEFAULT_DEEPSEEK_MAX_TOKENS
+    max_tokens: int | None = DEFAULT_DEEPSEEK_MAX_TOKENS
     temperature: float = DEFAULT_DEEPSEEK_TEMPERATURE
     thinking_enabled: bool = DEFAULT_DEEPSEEK_THINKING
 
@@ -66,9 +66,8 @@ class DeepSeekSettings(RuntimeModel):
                 DEFAULT_DEEPSEEK_TIMEOUT_SECONDS,
                 ENV_DEEPSEEK_TIMEOUT_SECONDS,
             ),
-            max_tokens=parse_positive_int(
+            max_tokens=parse_optional_positive_int(
                 env_map.get(ENV_DEEPSEEK_MAX_TOKENS),
-                DEFAULT_DEEPSEEK_MAX_TOKENS,
                 ENV_DEEPSEEK_MAX_TOKENS,
             ),
             temperature=parse_temperature(
@@ -87,7 +86,8 @@ class DeepSeekSettings(RuntimeModel):
         require_non_empty(self.base_url, "DeepSeekSettings.base_url")
         require_non_empty(self.model, "DeepSeekSettings.model")
         require_positive_int(self.timeout_seconds, "DeepSeekSettings.timeout_seconds")
-        require_positive_int(self.max_tokens, "DeepSeekSettings.max_tokens")
+        if self.max_tokens is not None:
+            require_positive_int(self.max_tokens, "DeepSeekSettings.max_tokens")
         if type(self.temperature) not in {float, int} or self.temperature < 0 or self.temperature > 2:
             raise ModelValidationError("DeepSeekSettings.temperature must be between 0 and 2")
         if type(self.thinking_enabled) is not bool:
@@ -129,7 +129,7 @@ class DeepSeekJsonClient:
         schema_name = str(output_schema.get("title") or "AgentOutput")
         example_payload = minimal_json_example(output_schema)
         provider_input = compact_provider_input(input_payload)
-        return {
+        request_payload = {
             "model": self.settings.model,
             "messages": [
                 {
@@ -154,10 +154,12 @@ class DeepSeekJsonClient:
             ],
             "response_format": {"type": "json_object"},
             "thinking": {"type": "enabled" if self.settings.thinking_enabled else "disabled"},
-            "max_tokens": self.settings.max_tokens,
             "temperature": float(self.settings.temperature),
             "stream": False,
         }
+        if self.settings.max_tokens is not None:
+            request_payload["max_tokens"] = self.settings.max_tokens
+        return request_payload
 
     def _post_json(self, payload: dict[str, Any]) -> dict[str, Any]:
         url = self.settings.base_url.rstrip("/") + "/chat/completions"
@@ -213,7 +215,7 @@ def parse_chat_completion_json(response_payload: dict[str, Any]) -> dict[str, An
 
     finish_reason = first_choice.get("finish_reason")
     if finish_reason == "length":
-        raise DeepSeekAPIError("DeepSeek response was truncated by max_tokens")
+        raise DeepSeekAPIError("DeepSeek response was truncated by the provider output limit")
 
     message = first_choice.get("message")
     if not isinstance(message, dict):
@@ -299,6 +301,12 @@ def parse_positive_int(value: str | None, default: int, field_name: str) -> int:
     if parsed <= 0:
         raise DeepSeekConfigurationError(f"{field_name} must be positive")
     return parsed
+
+
+def parse_optional_positive_int(value: str | None, field_name: str) -> int | None:
+    if value is None or not str(value).strip():
+        return None
+    return parse_positive_int(value, 1, field_name)
 
 
 def parse_temperature(value: str | None, default: float) -> float:

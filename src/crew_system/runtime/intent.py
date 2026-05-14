@@ -256,11 +256,11 @@ def detect_intent_type(
     if has_revision and has_content:
         return IntentType.REVISE_CONTENT_BATCH, 9, ambiguity
 
-    if has_calendar or period.period_type is PeriodType.CUSTOM:
-        return IntentType.GENERATE_ANNUAL_CALENDAR, 8, ambiguity
-
     if has_content or volume.total_items > 0:
         return IntentType.GENERATE_CONTENT_BATCH, 9, ambiguity
+
+    if has_calendar or period.period_type is PeriodType.CUSTOM:
+        return IntentType.GENERATE_ANNUAL_CALENDAR, 8, ambiguity
 
     if assets.videos and not has_content:
         return IntentType.GENERATE_VIDEO_BATCH, 8, ambiguity

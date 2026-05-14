@@ -60,6 +60,7 @@ class RuntimePlanningTest(unittest.TestCase):
             self.assertIn("risk_reviewer", plan.selected_agents)
             self.assertIn("hook_master", plan.selected_agents)
             self.assertIn("copywriter", plan.selected_agents)
+            self.assertNotIn("calendar_architect", plan.selected_agents)
             self.assertNotIn("linkedin_native_agent", plan.selected_agents)
             self.assertTrue(plan.agent_reasons["growth_hacker"].startswith("conditional_route"))
 
@@ -68,6 +69,29 @@ class RuntimePlanningTest(unittest.TestCase):
             self.assertIn("agent_hook_master", nodes["agent_copywriter"].depends_on)
             self.assertTrue(nodes["agent_copywriter"].reason)
             self.assertIn("write_artifacts", nodes)
+            self.assertIn(
+                f"outputs/batches/{plan.job.job_id}/facebook_posts_ready.md",
+                plan.job.expected_artifacts,
+            )
+
+    def test_campaign_pack_writes_context_needed_by_later_content_batches(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            engine = WorkspaceEngine(temp_dir)
+            engine.create_project("Coach SaaS")
+
+            chat_request = make_chat_request(
+                "Cree la strategie complete Facebook et LinkedIn pour le projet Coach SaaS."
+            )
+            intent = RuleBasedIntentParser().parse(chat_request)
+            resolution = ProjectResolver(engine).resolve(chat_request, intent)
+            normalized = RequestNormalizer().normalize(chat_request, intent, resolution)
+            context = ContextLoader(engine).load("job_context_campaign", normalized)
+            plan = JobPlanner(load_registry(ROOT)).plan(normalized, context)
+
+            self.assertEqual(plan.job.status, JobStatus.QUEUED)
+            self.assertNotIn("calendar_architect", plan.selected_agents)
+            self.assertIn("platforms/facebook_strategy.md", plan.job.expected_artifacts)
+            self.assertIn("platforms/linkedin_strategy.md", plan.job.expected_artifacts)
 
     def test_massive_content_batch_blocks_when_strategy_context_is_missing(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -89,6 +113,17 @@ class RuntimePlanningTest(unittest.TestCase):
             self.assertEqual(plan.selected_agents, [])
             self.assertEqual(plan.task_graph.nodes[0].task_id, "human_clarification")
             self.assertTrue(any(reason.startswith("missing_context:") for reason in plan.blocked_reasons))
+
+    def test_content_request_that_mentions_calendar_still_routes_to_content_batch(self) -> None:
+        chat_request = make_chat_request(
+            "Produis 3 publications Facebook pour la premiere semaine, "
+            "en te basant sur le calendrier annuel."
+        )
+
+        intent = RuleBasedIntentParser().parse(chat_request)
+
+        self.assertEqual(intent.intent_type, IntentType.GENERATE_CONTENT_BATCH)
+        self.assertEqual(intent.requested_volume.total_items, 3)
 
     def test_project_resolver_detects_ambiguous_workspace(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:

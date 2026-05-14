@@ -24,7 +24,6 @@ intent_routing:
       - "positioning_agent"
       - "influence_architect"
       - "growth_hacker"
-      - "calendar_architect"
       - "anti_banality_agent"
       - "risk_reviewer"
     platform_required:
@@ -56,7 +55,6 @@ intent_routing:
   generate_content_batch:
     required:
       - "strategist"
-      - "calendar_architect"
       - "audience_psychologist"
       - "hook_master"
       - "copywriter"
