@@ -16,6 +16,7 @@ from crew_system.agents.runner import (
     deepseek_agent_runner_from_env,
     validate_output_against_schema,
 )
+from crew_system.agents.providers import runner_for_provider
 
 __all__ = [
     "AgentExecutionMode",
@@ -31,5 +32,6 @@ __all__ = [
     "RunnerNotConfiguredError",
     "SchemaValidationResult",
     "deepseek_agent_runner_from_env",
+    "runner_for_provider",
     "validate_output_against_schema",
 ]
