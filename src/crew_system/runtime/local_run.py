@@ -1,10 +1,11 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 
-from crew_system.agents import AgentOutput, AgentRunner, MockAgentRunner
+from crew_system.agents import AgentOutput, AgentRunner, RunnerNotConfiguredError
 from crew_system.core.models import (
     ChatRequest,
     FinalChatResponse,
@@ -29,6 +30,7 @@ from crew_system.filesystem.workspace import utc_now
 from crew_system.quality import QualityAssessment, QualityGateEngine
 from crew_system.registry import load_registry
 from crew_system.runtime.agent_executor import AgentTaskExecutor
+from crew_system.runtime.clarification import build_clarification_prompt
 from crew_system.runtime.context_loader import ContextLoader
 from crew_system.runtime.intent import RuleBasedIntentParser
 from crew_system.runtime.planner import JobPlanner
@@ -39,6 +41,9 @@ from crew_system.runtime.writer import DeliverableWriteResult, DeliverableWriter
 
 class LocalRunError(RuntimeError):
     """Raised when a local runtime job cannot be executed."""
+
+
+ProgressCallback = Callable[[JobStatus, str, int, str, list[str]], None]
 
 
 @dataclass(slots=True)
@@ -67,12 +72,14 @@ class LocalRuntime:
         *,
         repo_root: str | Path,
         workspace_root: str | Path,
-        runner: AgentRunner | None = None,
+        runner: AgentRunner,
     ) -> None:
         self.repo_root = Path(repo_root).expanduser().resolve()
         self.workspace = WorkspaceEngine(workspace_root)
         self.registry = load_registry(self.repo_root)
-        self.runner = runner or MockAgentRunner()
+        if runner is None:
+            raise RunnerNotConfiguredError("LocalRuntime requires an explicit AgentRunner")
+        self.runner = runner
 
     def run(
         self,
@@ -83,6 +90,7 @@ class LocalRuntime:
         request_id: str | None = None,
         job_id: str | None = None,
         user_preferences: UserPreferences | None = None,
+        progress_callback: ProgressCallback | None = None,
     ) -> LocalRunResult:
         self.workspace.initialize_workspace()
         chat_request = ChatRequest(
@@ -106,11 +114,28 @@ class LocalRuntime:
         plan = JobPlanner(self.registry).plan(normalized, context, job_id=job_id)
         job = plan.job
         self.workspace.create_job_folder(job.project_slug, job.job_id)
+        report_progress(
+            progress_callback,
+            JobStatus.RUNNING,
+            "Demande comprise. Le runtime charge le contexte utile et choisit les agents.",
+            18,
+            "planning",
+            [],
+        )
 
         if job.status is JobStatus.WAITING_FOR_USER:
+            clarification = build_clarification_prompt(normalized, context, plan.blocked_reasons)
+            report_progress(
+                progress_callback,
+                JobStatus.WAITING_FOR_USER,
+                "Le runtime s'arrete pour demander une clarification exploitable.",
+                100,
+                "waiting_for_user",
+                [],
+            )
             self.workspace.append_job_log(
                 job.project_slug,
-                job_log_entry(job, chat_request.request_id, [], [], 0, job.status_reason),
+                job_log_entry(job, chat_request.request_id, [], [], 0, "; ".join(clarification.blocked_reasons)),
             )
             return LocalRunResult(
                 job=job,
@@ -118,11 +143,14 @@ class LocalRuntime:
                     job_id=job.job_id,
                     project_slug=job.project_slug,
                     status=JobStatus.WAITING_FOR_USER,
-                    message=job.status_reason or "Le job attend une information utilisateur.",
+                    message=clarification.message,
                     created_at=utc_now(),
-                    next_actions=plan.blocked_reasons,
+                    next_actions=clarification.next_actions,
+                    missing_information=clarification.missing_information,
+                    required_questions=clarification.required_questions,
+                    suggested_user_reply=clarification.suggested_user_reply,
                 ),
-                errors=plan.blocked_reasons,
+                errors=clarification.blocked_reasons,
             )
 
         ordered_agent_tasks = execution_order(plan.task_graph.nodes)
@@ -135,13 +163,28 @@ class LocalRuntime:
         assessments: list[QualityAssessment] = []
         errors: list[str] = []
         quality_engine = QualityGateEngine()
-        for task in ordered_agent_tasks:
+        total_agents = max(len(ordered_agent_tasks), 1)
+        for index, task in enumerate(ordered_agent_tasks):
+            agent_name = agent_display_name(self.registry, task.agent_id)
+            start_percent = 24 + round((index / total_agents) * 56)
+            done_percent = 24 + round(((index + 1) / total_agents) * 56)
+            report_progress(
+                progress_callback,
+                JobStatus.RUNNING,
+                f"{agent_name} analyse le contexte, les contraintes et les sorties des agents precedents.",
+                start_percent,
+                f"agent:{task.agent_id}:running",
+                [task.agent_id],
+            )
             result = executor.execute(
                 project_slug=job.project_slug,
                 task_node=task,
                 request=normalized,
                 context=context,
                 upstream_outputs=outputs,
+                progress_callback=progress_callback,
+                progress_start_percent=start_percent,
+                progress_done_percent=done_percent,
             )
             if result.output is not None:
                 outputs[result.output.agent_id] = result.output
@@ -154,8 +197,41 @@ class LocalRuntime:
             assessments.append(assessment)
             if result.error:
                 errors.append(result.error)
+                report_progress(
+                    progress_callback,
+                    JobStatus.RUNNING,
+                    f"{agent_name} a signale un point faible a corriger avant consolidation.",
+                    done_percent,
+                    f"agent:{task.agent_id}:failed",
+                    [task.agent_id],
+                )
+            else:
+                report_progress(
+                    progress_callback,
+                    JobStatus.RUNNING,
+                    f"{agent_name} a termine sa contribution. Score qualite: {assessment.report.overall_score}/10.",
+                    done_percent,
+                    f"agent:{task.agent_id}:done",
+                    [task.agent_id],
+                )
 
+        report_progress(
+            progress_callback,
+            JobStatus.RUNNING,
+            "Les contributions sont consolidees et passent les controles qualite.",
+            88,
+            "quality",
+            list(outputs),
+        )
         quality_report = merge_agent_quality_reports(job.job_id, assessments)
+        report_progress(
+            progress_callback,
+            JobStatus.RUNNING,
+            "Les fichiers lisibles sont en cours d'ecriture dans le projet.",
+            94,
+            "writing",
+            list(outputs),
+        )
         write_result = DeliverableWriter(self.workspace).write(
             plan=build_write_plan(job),
             quality_report=quality_report,
@@ -223,6 +299,26 @@ def execution_order(nodes: list[TaskNode]) -> list[TaskNode]:
         if not progressed:
             raise LocalRunError("Cannot resolve task execution order")
     return ordered
+
+
+def report_progress(
+    progress_callback: ProgressCallback | None,
+    status: JobStatus,
+    message: str,
+    percent_estimate: int,
+    current_phase: str,
+    active_agents: list[str],
+) -> None:
+    if progress_callback is None:
+        return
+    progress_callback(status, message, percent_estimate, current_phase, active_agents)
+
+
+def agent_display_name(registry, agent_id: str) -> str:
+    try:
+        return registry.get_agent_definition(agent_id).name
+    except Exception:
+        return agent_id.replace("_", " ").title()
 
 
 def merge_agent_quality_reports(job_id: str, assessments: list[QualityAssessment]) -> QualityReport:

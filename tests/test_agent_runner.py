@@ -85,6 +85,16 @@ class AgentRunnerTest(unittest.TestCase):
 
         self.assertFalse(result.valid)
         self.assertIn("$.growth_system is required", result.errors)
+        self.assertIn("$.self_evaluation is required", result.errors)
+
+    def test_schema_validator_requires_self_evaluation_when_declared(self) -> None:
+        registry = load_registry(ROOT)
+        schema = registry.get_schema("risk_reviewer")
+
+        result = validate_output_against_schema({"risk_review": {"decision": "ok"}}, schema)
+
+        self.assertFalse(result.valid)
+        self.assertIn("$.self_evaluation is required", result.errors)
 
     def test_llm_runner_fails_cleanly_on_invalid_provider_payload(self) -> None:
         registry = load_registry(ROOT)
@@ -98,6 +108,55 @@ class AgentRunnerTest(unittest.TestCase):
 
         self.assertEqual(result.agent_run.status, AgentRunStatus.FAILED)
         self.assertIn("$.self_evaluation.quality_score must be integer", result.error)
+
+    def test_llm_runner_repairs_schema_invalid_json_payload_once(self) -> None:
+        registry = load_registry(ROOT)
+        agent_input = AgentInputBuilder(registry).build(
+            task_node=growth_task(),
+            request=sample_request(),
+            context=sample_context(),
+        )
+        client = SchemaRepairLLMClient()
+
+        result = LLMAgentRunner(client=client).run(agent_input)
+
+        self.assertEqual(result.agent_run.status, AgentRunStatus.COMPLETED)
+        self.assertTrue(result.schema_validation.valid)
+        self.assertEqual(client.calls, 2)
+        self.assertIn("schema_validation_errors", client.second_input)
+        self.assertEqual(result.output.payload["growth_system"]["source"], "schema_repair_client")
+
+    def test_llm_runner_normalizes_repaired_root_mismatch(self) -> None:
+        registry = load_registry(ROOT)
+        agent_input = AgentInputBuilder(registry).build(
+            task_node=growth_task(),
+            request=sample_request(),
+            context=sample_context(),
+        )
+        client = RootMismatchAfterRepairLLMClient()
+
+        result = LLMAgentRunner(client=client).run(agent_input)
+
+        self.assertEqual(result.agent_run.status, AgentRunStatus.COMPLETED)
+        self.assertTrue(result.schema_validation.valid)
+        self.assertEqual(client.calls, 2)
+        self.assertIn("growth_system", result.output.payload)
+        self.assertEqual(result.output.payload["growth_system"]["growth_loop"]["source"], "root_mismatch")
+
+    def test_llm_runner_normalizes_copywriter_posts_list_root(self) -> None:
+        registry = load_registry(ROOT)
+        agent_input = AgentInputBuilder(registry).build(
+            task_node=copywriter_task(),
+            request=sample_request(),
+            context=sample_context(),
+        )
+        client = CopywriterPostsListAfterRepairLLMClient()
+
+        result = LLMAgentRunner(client=client).run(agent_input)
+
+        self.assertEqual(result.agent_run.status, AgentRunStatus.COMPLETED)
+        self.assertTrue(result.schema_validation.valid)
+        self.assertEqual(result.output.payload["content_units"]["unit_001"]["platform"], "facebook")
 
     def test_executor_logs_failed_runner_errors(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -156,6 +215,71 @@ class BadScoreLLMClient:
         }
 
 
+class SchemaRepairLLMClient:
+    def __init__(self) -> None:
+        self.calls = 0
+        self.second_input = {}
+
+    def generate_json(self, *, system_prompt, input_payload, output_schema):
+        self.calls += 1
+        if self.calls == 1:
+            return {
+                "wrong_key": {"source": "schema_repair_client"},
+                "self_evaluation": {
+                    "quality_score": 8,
+                    "confidence_score": 8,
+                },
+            }
+        self.second_input = input_payload
+        return {
+            "growth_system": {"source": "schema_repair_client"},
+            "self_evaluation": {
+                "quality_score": 8,
+                "confidence_score": 8,
+            },
+        }
+
+
+class RootMismatchAfterRepairLLMClient:
+    def __init__(self) -> None:
+        self.calls = 0
+
+    def generate_json(self, *, system_prompt, input_payload, output_schema):
+        self.calls += 1
+        if self.calls == 1:
+            return {
+                "wrong_key": {"source": "root_mismatch"},
+                "self_evaluation": {
+                    "quality_score": 8,
+                    "confidence_score": 8,
+                },
+            }
+        return {
+            "growth_loop": {"source": "root_mismatch"},
+            "self_evaluation": {
+                "quality_score": 8,
+                "confidence_score": 8,
+            },
+        }
+
+
+class CopywriterPostsListAfterRepairLLMClient:
+    def __init__(self) -> None:
+        self.calls = 0
+
+    def generate_json(self, *, system_prompt, input_payload, output_schema):
+        self.calls += 1
+        if self.calls == 1:
+            return {"draft_posts": [{"platform": "facebook"}]}
+        return {
+            "posts": [{"platform": "facebook", "body": "Post 1"}],
+            "self_evaluation": {
+                "quality_score": 8,
+                "confidence_score": 8,
+            },
+        }
+
+
 def growth_task() -> TaskNode:
     return TaskNode(
         task_id="agent_growth_hacker",
@@ -163,6 +287,16 @@ def growth_task() -> TaskNode:
         task_type=TaskType.AGENT_RUN,
         agent_id="growth_hacker",
         input_artifacts=["strategy/influence_architecture.md"],
+    )
+
+
+def copywriter_task() -> TaskNode:
+    return TaskNode(
+        task_id="agent_copywriter",
+        job_id="job_1",
+        task_type=TaskType.AGENT_RUN,
+        agent_id="copywriter",
+        input_artifacts=["strategy/growth_system.md"],
     )
 
 

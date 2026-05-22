@@ -15,20 +15,33 @@ from crew_system.cli.main import main
 from crew_system.cli.main import runner_for_provider
 from crew_system.agents import LLMAgentRunner, MockAgentRunner
 from crew_system.filesystem import WorkspaceEngine
+from crew_system.llm import LLMConfigurationError
 
 
 class CliRuntimeTest(unittest.TestCase):
-    def test_runner_provider_selection_prefers_real_deepseek_when_configured(self) -> None:
-        mock_runner, mock_provider = runner_for_provider("auto", env={})
-        deepseek_runner, deepseek_provider = runner_for_provider(
-            "auto",
+    def test_runner_provider_selection_uses_gemini_for_auto_without_implicit_fallback(self) -> None:
+        with self.assertRaisesRegex(LLMConfigurationError, "GEMINI_API_KEY"):
+            runner_for_provider("auto", env={})
+
+        explicit_mock_runner, explicit_mock_provider = runner_for_provider("mock", env={})
+        explicit_deepseek_runner, explicit_deepseek_provider = runner_for_provider(
+            "deepseek",
             env={"DEEPSEEK_API_KEY": "local-secret-value"},
         )
+        gemini_runner, gemini_provider = runner_for_provider(
+            "auto",
+            env={
+                "GEMINI_API_KEY": "local-secret-value",
+                "DEEPSEEK_API_KEY": "other-secret-value",
+            },
+        )
 
-        self.assertIsInstance(mock_runner, MockAgentRunner)
-        self.assertEqual(mock_provider, "mock")
-        self.assertIsInstance(deepseek_runner, LLMAgentRunner)
-        self.assertEqual(deepseek_provider, "deepseek")
+        self.assertIsInstance(explicit_mock_runner, MockAgentRunner)
+        self.assertEqual(explicit_mock_provider, "mock")
+        self.assertIsInstance(explicit_deepseek_runner, LLMAgentRunner)
+        self.assertEqual(explicit_deepseek_provider, "deepseek")
+        self.assertIsInstance(gemini_runner, LLMAgentRunner)
+        self.assertEqual(gemini_provider, "gemini")
 
     def test_init_workspace_create_project_and_registry_validate(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:

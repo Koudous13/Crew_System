@@ -1,0 +1,13 @@
+{
+  "name": "crew-system-workspace",
+  "private": true,
+  "workspaces": [
+    "apps/web"
+  ],
+  "scripts": {
+    "web:dev": "npm --workspace @crew-system/web run dev",
+    "web:build": "npm --workspace @crew-system/web run build",
+    "web:start": "npm --workspace @crew-system/web run start",
+    "web:typecheck": "npm --workspace @crew-system/web run typecheck"
+  }
+}

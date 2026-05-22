@@ -1,5 +1,6 @@
 """LLM provider integration package."""
 
+from crew_system.llm.base import LLMAPIError, LLMConfigurationError
 from crew_system.llm.deepseek import (
     DEFAULT_DEEPSEEK_BASE_URL,
     DEFAULT_ENV_FILE_NAME,
@@ -22,8 +23,31 @@ from crew_system.llm.deepseek import (
     parse_dotenv,
     read_nearest_dotenv,
 )
+from crew_system.llm.gemini import (
+    DEFAULT_GEMINI_BASE_URL,
+    DEFAULT_GEMINI_MAX_OUTPUT_TOKENS,
+    DEFAULT_GEMINI_MAX_RETRIES,
+    DEFAULT_GEMINI_MODEL,
+    DEFAULT_GEMINI_RESPONSE_SCHEMA,
+    DEFAULT_GEMINI_TEMPERATURE,
+    DEFAULT_GEMINI_TIMEOUT_SECONDS,
+    ENV_GEMINI_API_KEY,
+    ENV_GEMINI_BASE_URL,
+    ENV_GEMINI_MAX_OUTPUT_TOKENS,
+    ENV_GEMINI_MAX_RETRIES,
+    ENV_GEMINI_MODEL,
+    ENV_GEMINI_RESPONSE_SCHEMA,
+    ENV_GEMINI_TEMPERATURE,
+    ENV_GEMINI_TIMEOUT_SECONDS,
+    GeminiAPIError,
+    GeminiConfigurationError,
+    GeminiJsonClient,
+    GeminiSettings,
+)
 
 __all__ = [
+    "LLMAPIError",
+    "LLMConfigurationError",
     "DEFAULT_DEEPSEEK_BASE_URL",
     "DEFAULT_ENV_FILE_NAME",
     "DEFAULT_DEEPSEEK_MAX_TOKENS",
@@ -44,4 +68,23 @@ __all__ = [
     "DeepSeekSettings",
     "parse_dotenv",
     "read_nearest_dotenv",
+    "DEFAULT_GEMINI_BASE_URL",
+    "DEFAULT_GEMINI_MAX_OUTPUT_TOKENS",
+    "DEFAULT_GEMINI_MAX_RETRIES",
+    "DEFAULT_GEMINI_MODEL",
+    "DEFAULT_GEMINI_RESPONSE_SCHEMA",
+    "DEFAULT_GEMINI_TEMPERATURE",
+    "DEFAULT_GEMINI_TIMEOUT_SECONDS",
+    "ENV_GEMINI_API_KEY",
+    "ENV_GEMINI_BASE_URL",
+    "ENV_GEMINI_MAX_OUTPUT_TOKENS",
+    "ENV_GEMINI_MAX_RETRIES",
+    "ENV_GEMINI_MODEL",
+    "ENV_GEMINI_RESPONSE_SCHEMA",
+    "ENV_GEMINI_TEMPERATURE",
+    "ENV_GEMINI_TIMEOUT_SECONDS",
+    "GeminiAPIError",
+    "GeminiConfigurationError",
+    "GeminiJsonClient",
+    "GeminiSettings",
 ]

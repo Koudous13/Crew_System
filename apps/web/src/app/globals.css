@@ -1,0 +1,976 @@
+:root {
+  --bg: #f7f7f5;
+  --panel: #ffffff;
+  --panel-soft: #f0f1ee;
+  --ink: #171717;
+  --ink-soft: #3f423d;
+  --muted: #747970;
+  --line: #dedfd9;
+  --line-strong: #c4c8bf;
+  --accent: #4f7c64;
+  --accent-soft: #e5eee8;
+  --danger: #a0443e;
+  --radius: 8px;
+  color-scheme: light;
+  forced-color-adjust: none;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  letter-spacing: 0;
+}
+
+button,
+textarea,
+input {
+  appearance: none;
+  -webkit-appearance: none;
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: default;
+}
+
+.appShell {
+  display: grid;
+  grid-template-columns: 282px minmax(0, 1fr) 390px;
+  height: 100vh;
+  min-height: 100vh;
+  overflow: hidden;
+}
+
+.appShell.projectsCollapsed {
+  grid-template-columns: minmax(0, 1fr) 390px;
+}
+
+.appShell.projectsCollapsed .projectPanel {
+  display: none;
+}
+
+.projectPanel,
+.conversationPane,
+.workPane {
+  min-width: 0;
+}
+
+.projectPanel {
+  display: grid;
+  grid-template-rows: auto auto 1fr;
+  gap: 16px;
+  border-right: 1px solid var(--line);
+  background: var(--panel);
+  padding: 22px;
+}
+
+.projectPanelHeader,
+.conversationHeader,
+.panelTitle,
+.agentTopline,
+.projectModal div {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.eyebrow {
+  display: block;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 560;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.projectPanelHeader strong,
+.panelTitle h2,
+.conversationHeader h1,
+.openingPrompt h2,
+.projectModal h2 {
+  margin: 0;
+  color: var(--ink);
+  font-weight: 560;
+  letter-spacing: 0;
+}
+
+.projectPanelHeader strong {
+  display: block;
+  margin-top: 6px;
+  font-size: 20px;
+}
+
+.quietButton,
+.newProjectButton,
+.projectItem,
+.clarificationBlock button,
+.panelTitle button,
+.documentLink,
+.revisionBox button,
+.projectModal button {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--ink);
+}
+
+.quietButton {
+  min-height: 34px;
+  padding: 0 10px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.quietButton:hover,
+.projectItem:hover,
+.documentLink:hover {
+  border-color: var(--line-strong);
+  background: var(--panel-soft);
+}
+
+.newProjectButton {
+  min-height: 40px;
+  border-color: var(--ink);
+  background: var(--ink);
+  color: var(--panel);
+}
+
+.projectList {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  overflow: auto;
+  padding-right: 2px;
+}
+
+.projectItem {
+  display: grid;
+  gap: 5px;
+  width: 100%;
+  min-height: 62px;
+  text-align: left;
+  padding: 11px 12px;
+}
+
+.projectItem.active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.projectItem span {
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 560;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.projectItem small,
+.documentLink small,
+.agentRow small {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.conversationPane {
+  display: grid;
+  grid-template-areas:
+    "header"
+    "live"
+    "questions"
+    "chat"
+    "clarification"
+    "composer"
+    "error";
+  grid-template-rows: auto auto auto minmax(0, 1fr) auto auto auto;
+  height: 100vh;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+.conversationHeader {
+  grid-area: header;
+  align-items: center;
+  min-height: 60px;
+  border-bottom: 1px solid var(--line);
+  padding: 12px 24px;
+}
+
+.conversationHeader h1 {
+  margin-top: 2px;
+  font-size: 19px;
+}
+
+.liveBanner {
+  grid-area: live;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  border-bottom: 1px solid var(--line);
+  background: var(--panel);
+  padding: 8px 24px;
+}
+
+.liveBanner p {
+  margin: 2px 0 0;
+  color: var(--ink-soft);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.liveBanner strong {
+  color: var(--accent);
+  font-size: 22px;
+  font-weight: 560;
+}
+
+.liveMeta {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.liveMeta.stale {
+  color: var(--danger);
+}
+
+.signalDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--accent);
+  box-shadow: 0 0 0 0 rgba(79, 124, 100, 0.32);
+  animation: signalPulse 1.4s ease-out infinite;
+}
+
+.liveMeta.stale .signalDot {
+  background: var(--danger);
+  animation-duration: 0.8s;
+}
+
+.questionGuide {
+  grid-area: questions;
+  display: grid;
+  grid-template-columns: 132px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid var(--line);
+  background: var(--bg);
+  padding: 8px 24px;
+}
+
+.questionGuideHeader {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.questionGuideHeader strong {
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 560;
+  line-height: 1.25;
+}
+
+.questionFlow {
+  display: flex;
+  gap: 8px;
+  min-width: 0;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  padding-bottom: 1px;
+  scrollbar-gutter: stable;
+}
+
+.questionCard {
+  display: grid;
+  grid-template-areas:
+    "num title actions"
+    "num hint actions";
+  grid-template-columns: 22px minmax(0, 1fr) 68px;
+  grid-template-rows: auto 1fr;
+  column-gap: 8px;
+  row-gap: 3px;
+  flex: 0 0 306px;
+  min-height: 72px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel);
+  padding: 8px;
+}
+
+.questionCard > span {
+  grid-area: num;
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 560;
+  line-height: 1.4;
+}
+
+.questionCard strong {
+  grid-area: title;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 560;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.questionCard p {
+  grid-area: hint;
+  min-width: 0;
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.questionCard div {
+  grid-area: actions;
+  display: grid;
+  gap: 4px;
+  align-self: center;
+}
+
+.questionCard button {
+  min-height: 26px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--ink);
+  font-size: 11px;
+}
+
+.questionCard button:last-child {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: var(--panel);
+}
+
+.chatSurface {
+  grid-area: chat;
+  display: grid;
+  align-content: start;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  padding: 22px min(7vw, 76px);
+}
+
+.openingPrompt {
+  align-self: center;
+  max-width: 680px;
+  padding-bottom: 8vh;
+}
+
+.openingPrompt h2 {
+  margin-top: 10px;
+  font-size: 46px;
+  line-height: 1.02;
+}
+
+.openingPrompt p {
+  max-width: 560px;
+  margin: 16px 0 0;
+  color: var(--muted);
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+.messageStack {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  min-height: min-content;
+  padding-bottom: 10px;
+}
+
+.message {
+  max-width: 780px;
+  border-left: 2px solid var(--line);
+  padding-left: 18px;
+}
+
+.message.assistant {
+  border-left-color: var(--accent);
+}
+
+.message span {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.message p {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 15px;
+  line-height: 1.62;
+  white-space: pre-wrap;
+}
+
+.clarificationBlock {
+  grid-area: clarification;
+  display: grid;
+  gap: 12px;
+  margin: 0 min(7vw, 76px) 18px;
+  border-left: 2px solid var(--accent);
+  background: var(--panel);
+  padding: 18px 20px;
+}
+
+.clarificationBlock h3 {
+  margin: 0;
+  color: var(--ink);
+  font-size: 18px;
+  font-weight: 560;
+}
+
+.clarificationBlock ol {
+  display: grid;
+  gap: 9px;
+  margin: 0;
+  padding-left: 19px;
+  color: var(--ink-soft);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.clarificationBlock button,
+.composerFooter button,
+.revisionBox button,
+.projectModal button[type="submit"] {
+  min-height: 38px;
+  border: 1px solid var(--ink);
+  border-radius: var(--radius);
+  background: var(--ink);
+  color: var(--panel);
+  padding: 0 14px;
+}
+
+.clarificationBlock button {
+  justify-self: start;
+}
+
+.composer {
+  grid-area: composer;
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
+  margin: 0 min(7vw, 76px) 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--panel);
+  box-shadow: 0 -18px 32px rgba(252, 252, 250, 0.9);
+}
+
+.composer textarea {
+  display: block;
+  width: 100%;
+  min-height: 76px;
+  max-height: 20vh;
+  resize: vertical;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--ink);
+  line-height: 1.55;
+  padding: 14px 16px 8px;
+}
+
+.composerFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 0 8px 8px 16px;
+}
+
+.composerFooter div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.composerFooter span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.errorText {
+  grid-area: error;
+  margin: -8px min(7vw, 76px) 18px;
+  color: var(--danger);
+  font-size: 13px;
+}
+
+.workPane {
+  display: grid;
+  grid-template-rows: minmax(360px, 0.9fr) minmax(420px, 1.1fr);
+  max-height: 100vh;
+  overflow: hidden;
+  border-left: 1px solid var(--line);
+  background: var(--panel);
+}
+
+.livePanel,
+.documentPanel {
+  min-width: 0;
+  padding: 24px;
+}
+
+.livePanel {
+  overflow: auto;
+  border-bottom: 1px solid var(--line);
+}
+
+.panelTitle {
+  align-items: center;
+}
+
+.panelTitle h2 {
+  margin-top: 6px;
+  font-size: 20px;
+}
+
+.panelTitle strong {
+  color: var(--accent);
+  font-size: 24px;
+  font-weight: 560;
+}
+
+.panelTitle.compact h2 {
+  font-size: 18px;
+}
+
+.panelTitle button {
+  min-height: 34px;
+  padding: 0 12px;
+}
+
+.panelTitle button:disabled,
+.revisionBox button:disabled {
+  border-color: var(--line);
+  background: transparent;
+  color: var(--line-strong);
+}
+
+.globalProgress,
+.agentTrack {
+  overflow: hidden;
+  height: 3px;
+  background: var(--line);
+}
+
+.globalProgress {
+  margin: 22px 0 20px;
+}
+
+.globalProgress span,
+.agentTrack span {
+  display: block;
+  width: 0;
+  height: 100%;
+  background: var(--accent);
+  transition: width 240ms ease;
+}
+
+.runtimeError {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 16px;
+  border-left: 2px solid var(--danger);
+  background: color-mix(in srgb, var(--danger) 7%, var(--panel));
+  padding: 12px 14px;
+}
+
+.runtimeError p {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.agentList {
+  display: grid;
+  gap: 10px;
+}
+
+.agentRow {
+  display: grid;
+  gap: 8px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 12px;
+}
+
+.agentRow.activeAgent {
+  border-color: color-mix(in srgb, var(--accent) 38%, var(--line));
+  background: linear-gradient(90deg, rgba(79, 124, 100, 0.08), transparent 64%);
+}
+
+.agentRow.activeAgent .agentTrack span {
+  background-image: linear-gradient(90deg, var(--accent), #7fc5a2, var(--accent));
+  background-size: 220% 100%;
+  animation: trackFlow 1.8s linear infinite;
+}
+
+.agentTopline {
+  align-items: baseline;
+}
+
+.agentTopline strong {
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 560;
+}
+
+.agentTopline span {
+  color: var(--accent);
+  font-size: 13px;
+}
+
+.agentRow p,
+.internalFeed p,
+.mutedText {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.internalFeed {
+  display: grid;
+  gap: 10px;
+  margin-top: 22px;
+}
+
+.internalFeed article {
+  display: grid;
+  gap: 5px;
+  border-top: 1px solid var(--line);
+  padding-top: 10px;
+}
+
+.internalFeed strong {
+  color: var(--ink-soft);
+  font-size: 13px;
+  font-weight: 560;
+}
+
+.documentPanel {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 14px;
+  min-height: 0;
+}
+
+.documentList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+  overflow: auto;
+  padding-bottom: 2px;
+}
+
+.documentLink {
+  display: grid;
+  gap: 4px;
+  flex: 0 0 auto;
+  width: 100%;
+  min-height: 52px;
+  text-align: left;
+  padding: 9px 10px;
+}
+
+.documentLink.active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.documentLink span {
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 560;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.documentReader {
+  overflow: auto;
+  min-height: 260px;
+  margin: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: #fcfcfb;
+  color: var(--ink);
+  font-family:
+    "SFMono-Regular", "Cascadia Mono", Consolas, ui-monospace, monospace;
+  font-size: 12px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  padding: 16px;
+}
+
+.documentOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  background: rgba(23, 23, 23, 0.28);
+  backdrop-filter: blur(3px);
+  padding: 24px;
+}
+
+.documentModal {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: 14px;
+  width: min(920px, calc(100vw - 32px));
+  max-height: calc(100vh - 48px);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--panel);
+  padding: 22px;
+  box-shadow: 0 28px 80px rgba(23, 23, 23, 0.18);
+}
+
+.documentModal header,
+.documentActions {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.documentModal h2 {
+  margin-top: 6px;
+  font-size: 24px;
+}
+
+.documentActions button {
+  min-height: 36px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--ink);
+  padding: 0 12px;
+}
+
+.documentActions button:first-child {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: var(--panel);
+}
+
+.documentModal .documentReader {
+  min-height: 0;
+}
+
+.revisionBox {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+}
+
+.revisionBox input,
+.projectModal input,
+.projectModal textarea {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  outline: 0;
+  background: transparent;
+  color: var(--ink);
+  padding: 10px 12px;
+}
+
+.modalLayer {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: grid;
+  place-items: center;
+  background: rgba(23, 23, 23, 0.2);
+  padding: 24px;
+}
+
+.projectModal {
+  display: grid;
+  gap: 14px;
+  width: min(460px, 100%);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--panel);
+  padding: 24px;
+}
+
+.projectModal h2 {
+  font-size: 24px;
+}
+
+.projectModal textarea {
+  min-height: 98px;
+  resize: vertical;
+}
+
+.projectModal button {
+  min-height: 36px;
+  padding: 0 14px;
+}
+
+@keyframes signalPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(79, 124, 100, 0.32);
+    opacity: 1;
+  }
+
+  100% {
+    box-shadow: 0 0 0 9px rgba(79, 124, 100, 0);
+    opacity: 0.62;
+  }
+}
+
+@keyframes trackFlow {
+  0% {
+    background-position: 0% 50%;
+  }
+
+  100% {
+    background-position: 220% 50%;
+  }
+}
+
+@media (max-width: 1180px) {
+  .appShell,
+  .appShell.projectsCollapsed {
+    grid-template-columns: minmax(0, 1fr);
+    height: auto;
+    overflow: visible;
+  }
+
+  .projectPanel {
+    position: fixed;
+    inset: 0 auto 0 0;
+    z-index: 20;
+    width: min(320px, calc(100vw - 24px));
+    box-shadow: 18px 0 36px rgba(23, 23, 23, 0.12);
+  }
+
+  .appShell.projectsCollapsed .projectPanel {
+    display: none;
+  }
+
+  .workPane {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-rows: auto;
+    max-height: none;
+    border-left: 0;
+    border-top: 1px solid var(--line);
+  }
+
+  .livePanel {
+    border-right: 1px solid var(--line);
+    border-bottom: 0;
+  }
+}
+
+@media (max-width: 760px) {
+  .conversationHeader,
+  .liveBanner,
+  .questionGuide,
+  .chatSurface,
+  .livePanel,
+  .documentPanel {
+    padding-left: 18px;
+    padding-right: 18px;
+  }
+
+  .conversationHeader {
+    align-items: flex-start;
+  }
+
+  .openingPrompt h2 {
+    font-size: 36px;
+  }
+
+  .clarificationBlock,
+  .composer {
+    margin-left: 18px;
+    margin-right: 18px;
+  }
+
+  .composerFooter,
+  .questionGuide,
+  .revisionBox,
+  .workPane {
+    grid-template-columns: 1fr;
+  }
+
+  .questionCard {
+    grid-template-columns: 20px minmax(0, 1fr) 64px;
+    flex-basis: min(82vw, 290px);
+  }
+
+  .composerFooter {
+    display: grid;
+  }
+
+  .composerFooter button {
+    width: 100%;
+  }
+
+  .documentOverlay {
+    padding: 12px;
+  }
+
+  .documentModal {
+    width: 100%;
+    max-height: calc(100vh - 24px);
+    padding: 16px;
+  }
+
+  .documentModal header,
+  .documentActions {
+    display: grid;
+  }
+
+  .livePanel {
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+}

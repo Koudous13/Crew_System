@@ -40,10 +40,15 @@ class StoredJob(RuntimeModel):
     runtime_job_id: str = ""
     completed_at: str = ""
     error: str = ""
+    assistant_message: str = ""
+    suggested_user_reply: str = ""
     artifacts_created: list[str] = field(default_factory=list)
     agents_used: list[str] = field(default_factory=list)
     completed_tasks: list[str] = field(default_factory=list)
     pending_tasks: list[str] = field(default_factory=list)
+    missing_information: list[str] = field(default_factory=list)
+    blocked_reasons: list[str] = field(default_factory=list)
+    required_questions: list[str] = field(default_factory=list)
     can_resume: bool = True
 
     def validate(self) -> None:
@@ -62,6 +67,13 @@ class StoredJob(RuntimeModel):
         validate_string_list(self.agents_used, "StoredJob.agents_used")
         validate_string_list(self.completed_tasks, "StoredJob.completed_tasks")
         validate_string_list(self.pending_tasks, "StoredJob.pending_tasks")
+        validate_string_list(self.missing_information, "StoredJob.missing_information")
+        validate_string_list(self.blocked_reasons, "StoredJob.blocked_reasons")
+        validate_string_list(self.required_questions, "StoredJob.required_questions")
+        if not isinstance(self.assistant_message, str):
+            raise JobStoreError("StoredJob.assistant_message must be text")
+        if not isinstance(self.suggested_user_reply, str):
+            raise JobStoreError("StoredJob.suggested_user_reply must be text")
         require_bool(self.can_resume, "StoredJob.can_resume")
         if self.status is JobStatus.FAILED and not self.error:
             raise JobStoreError("StoredJob.error is required when failed")

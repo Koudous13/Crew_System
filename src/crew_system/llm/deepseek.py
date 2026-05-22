@@ -3,6 +3,8 @@ from __future__ import annotations
 import json
 import os
 import re
+import socket
+import time
 import urllib.error
 import urllib.request
 from dataclasses import dataclass
@@ -15,29 +17,32 @@ from crew_system.core.models import (
     require_non_empty,
     require_positive_int,
 )
+from crew_system.llm.base import LLMAPIError, LLMConfigurationError
 
 ENV_DEEPSEEK_API_KEY = "DEEPSEEK_API_KEY"
 ENV_DEEPSEEK_BASE_URL = "DEEPSEEK_BASE_URL"
 ENV_DEEPSEEK_MODEL = "DEEPSEEK_MODEL"
 ENV_DEEPSEEK_TIMEOUT_SECONDS = "DEEPSEEK_TIMEOUT_SECONDS"
+ENV_DEEPSEEK_MAX_RETRIES = "DEEPSEEK_MAX_RETRIES"
 ENV_DEEPSEEK_MAX_TOKENS = "DEEPSEEK_MAX_TOKENS"
 ENV_DEEPSEEK_TEMPERATURE = "DEEPSEEK_TEMPERATURE"
 ENV_DEEPSEEK_THINKING = "DEEPSEEK_THINKING"
 
 DEFAULT_DEEPSEEK_BASE_URL = "https://api.deepseek.com"
 DEFAULT_DEEPSEEK_MODEL = "deepseek-v4-pro"
-DEFAULT_DEEPSEEK_TIMEOUT_SECONDS = 90
+DEFAULT_DEEPSEEK_TIMEOUT_SECONDS = 240
+DEFAULT_DEEPSEEK_MAX_RETRIES = 6
 DEFAULT_DEEPSEEK_MAX_TOKENS: int | None = None
 DEFAULT_DEEPSEEK_TEMPERATURE = 0.3
 DEFAULT_DEEPSEEK_THINKING = False
 DEFAULT_ENV_FILE_NAME = ".env"
 
 
-class DeepSeekConfigurationError(RuntimeError):
+class DeepSeekConfigurationError(LLMConfigurationError):
     """Raised when DeepSeek settings are missing or invalid."""
 
 
-class DeepSeekAPIError(RuntimeError):
+class DeepSeekAPIError(LLMAPIError):
     """Raised when DeepSeek returns an unusable response."""
 
 
@@ -47,6 +52,7 @@ class DeepSeekSettings(RuntimeModel):
     base_url: str = DEFAULT_DEEPSEEK_BASE_URL
     model: str = DEFAULT_DEEPSEEK_MODEL
     timeout_seconds: int = DEFAULT_DEEPSEEK_TIMEOUT_SECONDS
+    max_retries: int = DEFAULT_DEEPSEEK_MAX_RETRIES
     max_tokens: int | None = DEFAULT_DEEPSEEK_MAX_TOKENS
     temperature: float = DEFAULT_DEEPSEEK_TEMPERATURE
     thinking_enabled: bool = DEFAULT_DEEPSEEK_THINKING
@@ -65,6 +71,11 @@ class DeepSeekSettings(RuntimeModel):
                 env_map.get(ENV_DEEPSEEK_TIMEOUT_SECONDS),
                 DEFAULT_DEEPSEEK_TIMEOUT_SECONDS,
                 ENV_DEEPSEEK_TIMEOUT_SECONDS,
+            ),
+            max_retries=parse_positive_int(
+                env_map.get(ENV_DEEPSEEK_MAX_RETRIES),
+                DEFAULT_DEEPSEEK_MAX_RETRIES,
+                ENV_DEEPSEEK_MAX_RETRIES,
             ),
             max_tokens=parse_optional_positive_int(
                 env_map.get(ENV_DEEPSEEK_MAX_TOKENS),
@@ -86,6 +97,7 @@ class DeepSeekSettings(RuntimeModel):
         require_non_empty(self.base_url, "DeepSeekSettings.base_url")
         require_non_empty(self.model, "DeepSeekSettings.model")
         require_positive_int(self.timeout_seconds, "DeepSeekSettings.timeout_seconds")
+        require_positive_int(self.max_retries, "DeepSeekSettings.max_retries")
         if self.max_tokens is not None:
             require_positive_int(self.max_tokens, "DeepSeekSettings.max_tokens")
         if type(self.temperature) not in {float, int} or self.temperature < 0 or self.temperature > 2:
@@ -174,18 +186,31 @@ class DeepSeekJsonClient:
             },
             method="POST",
         )
-        try:
-            with urllib.request.urlopen(request, timeout=self.settings.timeout_seconds) as response:
-                return json.loads(response.read().decode("utf-8"))
-        except urllib.error.HTTPError as exc:
-            error_body = exc.read().decode("utf-8", errors="replace")
-            raise DeepSeekAPIError(f"DeepSeek API error {exc.code}: {trim_error(error_body)}") from exc
-        except urllib.error.URLError as exc:
-            raise DeepSeekAPIError(f"DeepSeek API request failed: {exc.reason}") from exc
-        except TimeoutError as exc:
-            raise DeepSeekAPIError("DeepSeek API request timed out") from exc
-        except json.JSONDecodeError as exc:
-            raise DeepSeekAPIError(f"DeepSeek API returned invalid JSON envelope: {exc}") from exc
+        attempts = max(self.settings.max_retries, 1)
+        last_error: Exception | None = None
+        for attempt in range(1, attempts + 1):
+            try:
+                with urllib.request.urlopen(request, timeout=self.settings.timeout_seconds) as response:
+                    return json.loads(response.read().decode("utf-8"))
+            except urllib.error.HTTPError as exc:
+                error_body = exc.read().decode("utf-8", errors="replace")
+                if exc.code < 500 or attempt == attempts:
+                    raise DeepSeekAPIError(
+                        f"DeepSeek API error {exc.code}: {trim_error(error_body)}"
+                    ) from exc
+                last_error = exc
+            except urllib.error.URLError as exc:
+                if attempt == attempts:
+                    raise DeepSeekAPIError(f"DeepSeek API request failed: {exc.reason}") from exc
+                last_error = exc
+            except (TimeoutError, socket.timeout) as exc:
+                if attempt == attempts:
+                    raise DeepSeekAPIError("DeepSeek API request timed out") from exc
+                last_error = exc
+            except json.JSONDecodeError as exc:
+                raise DeepSeekAPIError(f"DeepSeek API returned invalid JSON envelope: {exc}") from exc
+            time.sleep(min(3 * attempt, 20))
+        raise DeepSeekAPIError(f"DeepSeek API request failed after retries: {last_error}")
 
 
 def build_json_system_prompt(

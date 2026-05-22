@@ -709,6 +709,9 @@ class FinalChatResponse(RuntimeModel):
     created_at: str
     artifacts_created: list[str] = field(default_factory=list)
     next_actions: list[str] = field(default_factory=list)
+    missing_information: list[str] = field(default_factory=list)
+    required_questions: list[str] = field(default_factory=list)
+    suggested_user_reply: str = ""
 
     def validate(self) -> None:
         require_enum(self.status, JobStatus, "FinalChatResponse.status")
@@ -718,6 +721,10 @@ class FinalChatResponse(RuntimeModel):
         require_non_empty(self.created_at, "FinalChatResponse.created_at")
         validate_string_list(self.artifacts_created, "FinalChatResponse.artifacts_created")
         validate_string_list(self.next_actions, "FinalChatResponse.next_actions")
+        validate_string_list(self.missing_information, "FinalChatResponse.missing_information")
+        validate_string_list(self.required_questions, "FinalChatResponse.required_questions")
+        if not isinstance(self.suggested_user_reply, str):
+            raise ModelValidationError("FinalChatResponse.suggested_user_reply must be text")
 
 
 def require_non_empty(value: str, field_name: str) -> None:

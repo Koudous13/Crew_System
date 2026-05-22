@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import socket
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -81,6 +82,10 @@ class JsonApiHandler(BaseHTTPRequestHandler):
         parts = split_path(path)
         if parts == ["health"]:
             return self.api_service.health()
+        if parts == ["projects"]:
+            return self.api_service.list_projects()
+        if parts == ["conversations"]:
+            return self.api_service.list_conversations(project_slug=optional_query(query, "project_slug"))
         if len(parts) == 2 and parts[0] == "conversations":
             return self.api_service.get_conversation(parts[1])
         if parts == ["jobs"]:
@@ -141,6 +146,16 @@ class JsonApiHandler(BaseHTTPRequestHandler):
                     run_async=body_bool(body, "run_async", True),
                 ),
                 202 if body_bool(body, "run_async", True) else 200,
+            )
+        if len(parts) == 3 and parts[0] == "conversations" and parts[2] == "assistant-messages":
+            return (
+                self.api_service.append_assistant_message(
+                    conversation_id=parts[1],
+                    content=required_body(body, "content"),
+                    job_id=body_text(body, "job_id"),
+                    project_slug=body_text(body, "project_slug"),
+                ),
+                201,
             )
         if parts == ["jobs"]:
             return (
@@ -203,21 +218,30 @@ class JsonApiHandler(BaseHTTPRequestHandler):
                 if event_id in seen_event_ids:
                     continue
                 seen_event_ids.add(event_id)
-                self._write_sse_event("progress", event)
+                if not self._write_sse_event("progress", event):
+                    self.close_connection = True
+                    return
             job = self.api_service.get_job(project_slug, job_id)["job"]
+            if not self._write_sse_event("heartbeat", heartbeat_payload(job)):
+                self.close_connection = True
+                return
             if job["status"] in {"completed", "failed", "cancelled", "needs_revision", "waiting_for_user"}:
                 self._write_sse_event("done", job)
                 self.close_connection = True
                 return
             time.sleep(1)
 
-    def _write_sse_event(self, event_name: str, payload: dict[str, Any]) -> None:
+    def _write_sse_event(self, event_name: str, payload: dict[str, Any]) -> bool:
         body = (
             f"event: {event_name}\n"
             f"data: {json.dumps(payload, ensure_ascii=False, sort_keys=True)}\n\n"
         ).encode("utf-8")
-        self.wfile.write(body)
-        self.wfile.flush()
+        try:
+            self.wfile.write(body)
+            self.wfile.flush()
+            return True
+        except (BrokenPipeError, ConnectionAbortedError, ConnectionResetError, socket.error):
+            return False
 
     def _path_and_query(self) -> tuple[str, dict[str, list[str]]]:
         parsed = urlparse(self.path)
@@ -263,6 +287,25 @@ class JsonApiHandler(BaseHTTPRequestHandler):
 
 def split_path(path: str) -> list[str]:
     return [part for part in path.split("/") if part]
+
+
+def heartbeat_payload(job: dict[str, Any]) -> dict[str, Any]:
+    job_id = str(job.get("job_id", "job"))
+    status = str(job.get("status", "running"))
+    agents_used = job.get("agents_used", [])
+    artifacts_created = job.get("artifacts_created", [])
+    terminal = status in {"completed", "failed", "cancelled", "needs_revision", "waiting_for_user"}
+    return {
+        "event_id": f"heartbeat_{job_id}_{int(time.time())}",
+        "job_id": job_id,
+        "status": status,
+        "message": "Signal runtime actif. Le job continue en arriere-plan.",
+        "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        "percent_estimate": 100 if terminal else 0,
+        "current_phase": "heartbeat",
+        "active_agents": agents_used if isinstance(agents_used, list) else [],
+        "artifacts_created": artifacts_created if isinstance(artifacts_created, list) else [],
+    }
 
 
 def required_query(query: dict[str, list[str]], key: str) -> str:

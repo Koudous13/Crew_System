@@ -220,6 +220,13 @@ class LLMAgentRunner(AgentRunner):
                 input_payload=agent_input.to_dict(),
                 output_schema=agent_input.output_schema,
             )
+            validation = validate_output_against_schema(payload, agent_input.output_schema)
+            if not validation.valid:
+                payload = self.client.generate_json(
+                    system_prompt=build_schema_repair_prompt(agent_input, validation),
+                    input_payload=build_schema_repair_input(agent_input, payload, validation),
+                    output_schema=agent_input.output_schema,
+                )
         except Exception as exc:  # pragma: no cover - provider boundary
             return build_failed_result(agent_input, f"LLM provider failed: {exc}")
         return build_run_result(agent_input, payload, started_at=started_at)
@@ -247,6 +254,12 @@ def deepseek_agent_runner_from_env(env: Mapping[str, str] | None = None) -> LLMA
     return LLMAgentRunner(client=DeepSeekJsonClient.from_env(env))
 
 
+def gemini_agent_runner_from_env(env: Mapping[str, str] | None = None) -> LLMAgentRunner:
+    from crew_system.llm.gemini import GeminiJsonClient
+
+    return LLMAgentRunner(client=GeminiJsonClient.from_env(env))
+
+
 def build_run_result(
     agent_input: AgentInput,
     payload: dict[str, Any],
@@ -254,6 +267,7 @@ def build_run_result(
     started_at: str,
     raw_text: str = "",
 ) -> AgentRunResult:
+    payload = normalize_payload_to_schema(payload, agent_input.output_schema)
     validation = validate_output_against_schema(payload, agent_input.output_schema)
     if not validation.valid:
         return build_failed_result(
@@ -301,6 +315,100 @@ def build_run_result(
         output=output,
         schema_validation=validation,
     )
+
+
+def normalize_payload_to_schema(payload: dict[str, Any], schema: dict[str, Any]) -> dict[str, Any]:
+    if not isinstance(payload, dict):
+        return payload
+    properties = schema.get("properties", {})
+    if isinstance(properties, dict) and "self_evaluation" in properties and "self_evaluation" not in payload:
+        evaluation = find_self_evaluation(payload)
+        if isinstance(evaluation, dict):
+            payload = {**payload, "self_evaluation": evaluation}
+    required_keys = [key for key in schema.get("required", []) if isinstance(key, str)]
+    missing_required = [key for key in required_keys if key not in payload]
+    if len(missing_required) != 1 or not isinstance(properties, dict):
+        return payload
+
+    required_key = missing_required[0]
+    required_schema = properties.get(required_key, {})
+    if not isinstance(required_schema, dict) or required_schema.get("type") != "object":
+        return payload
+
+    content = {key: value for key, value in payload.items() if key != "self_evaluation"}
+    if not content:
+        return payload
+    normalized: dict[str, Any] = {required_key: normalize_required_object_content(required_key, content)}
+    evaluation = payload.get("self_evaluation") or find_self_evaluation(content)
+    if isinstance(evaluation, dict):
+        normalized["self_evaluation"] = evaluation
+    return normalized
+
+
+def normalize_required_object_content(required_key: str, content: dict[str, Any]) -> dict[str, Any]:
+    if required_key != "content_units":
+        return content
+    for list_key in ["content_units", "posts", "publications", "items", "units"]:
+        value = content.get(list_key)
+        if isinstance(value, list):
+            return list_to_unit_dict(value)
+    if len(content) == 1:
+        only_value = next(iter(content.values()))
+        if isinstance(only_value, list):
+            return list_to_unit_dict(only_value)
+    return content
+
+
+def list_to_unit_dict(items: list[Any]) -> dict[str, Any]:
+    return {
+        f"unit_{index:03d}": item if isinstance(item, dict) else {"value": item}
+        for index, item in enumerate(items, start=1)
+    }
+
+
+def find_self_evaluation(value: Any) -> dict[str, Any] | None:
+    if isinstance(value, dict):
+        candidate = value.get("self_evaluation")
+        if isinstance(candidate, dict):
+            return candidate
+        if "quality_score" in value and "confidence_score" in value:
+            return value
+        for child in value.values():
+            found = find_self_evaluation(child)
+            if found is not None:
+                return found
+    if isinstance(value, list):
+        for item in value:
+            found = find_self_evaluation(item)
+            if found is not None:
+                return found
+    return None
+
+
+def build_schema_repair_prompt(agent_input: AgentInput, validation: SchemaValidationResult) -> str:
+    return (
+        f"{agent_input.prompt.strip()}\n\n"
+        "CORRECTION OBLIGATOIRE: ta sortie precedente etait un JSON valide, "
+        "mais elle ne respectait pas le schema attendu. Reponds maintenant avec "
+        "un seul objet JSON strict, sans Markdown, sans commentaire, sans texte "
+        "avant ou apres. Tu dois corriger exactement ces erreurs: "
+        + "; ".join(validation.errors)
+    )
+
+
+def build_schema_repair_input(
+    agent_input: AgentInput,
+    invalid_payload: dict[str, Any],
+    validation: SchemaValidationResult,
+) -> dict[str, Any]:
+    repair_input = agent_input.to_dict()
+    repair_input["previous_invalid_output"] = invalid_payload
+    repair_input["schema_validation_errors"] = validation.errors
+    repair_input["repair_instruction"] = (
+        "Conserve les idees utiles de previous_invalid_output, mais renomme et "
+        "structure les champs pour respecter strictement output_schema."
+    )
+    return repair_input
 
 
 def build_failed_result(
@@ -397,6 +505,8 @@ def validate_schema_node(
                 errors.append(f"{path}.{required_key} is required")
         properties = schema.get("properties", {})
         if isinstance(properties, dict):
+            if "self_evaluation" in properties and "self_evaluation" not in value:
+                errors.append(f"{path}.self_evaluation is required")
             for key, child_schema in properties.items():
                 if key in value and isinstance(child_schema, dict):
                     validate_schema_node(value[key], child_schema, f"{path}.{key}", errors)

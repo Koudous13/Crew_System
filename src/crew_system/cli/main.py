@@ -12,7 +12,7 @@ from crew_system.agents.providers import runner_for_provider as build_runner_for
 from crew_system.config import CrewSystemSettings
 from crew_system.filesystem import WorkspaceEngine
 from crew_system.jobs import JobStore, JobStoreError, LocalWorker
-from crew_system.llm import DeepSeekConfigurationError
+from crew_system.llm import LLMConfigurationError
 from crew_system.registry import validate_registry
 
 
@@ -83,7 +83,7 @@ def build_parser() -> argparse.ArgumentParser:
     api_serve.add_argument("--port", type=int, default=8765, help="API port.")
     api_serve.add_argument(
         "--provider",
-        choices=["auto", "mock", "deepseek"],
+        choices=["auto", "mock", "gemini", "deepseek"],
         default="auto",
         help="Default API runner provider.",
     )
@@ -99,9 +99,9 @@ def build_parser() -> argparse.ArgumentParser:
         run_command.add_argument("--mock", action="store_true", help="Use deterministic mock runner.")
         run_command.add_argument(
             "--provider",
-            choices=["auto", "mock", "deepseek"],
+            choices=["auto", "mock", "gemini", "deepseek"],
             default="auto",
-            help="Runner provider. auto uses DeepSeek when configured, otherwise mock.",
+            help="Runner provider. auto uses Gemini/Gemma only. DeepSeek and mock are explicit-only.",
         )
         if command_name == "content-batch":
             run_command.add_argument("--platform", default="facebook", choices=["facebook", "linkedin"])
@@ -246,8 +246,8 @@ def run_local_job(args: argparse.Namespace) -> int:
     settings, workspace_root = runtime_settings(args)
     try:
         runner, provider_used = runner_for_provider(args.provider, args.mock)
-    except DeepSeekConfigurationError as exc:
-        payload = {"ok": False, "error": str(exc), "provider": "deepseek"}
+    except LLMConfigurationError as exc:
+        payload = {"ok": False, "error": str(exc), "provider": args.provider}
         print_payload(payload, args.json)
         return 1
     worker = LocalWorker(

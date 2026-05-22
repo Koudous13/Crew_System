@@ -119,6 +119,9 @@ intent_routing:
     optional:
       - "growth_hacker"
       - "audience_psychologist"
+  answer_project_question:
+    required:
+      - "strategist"
 platform_routing:
   facebook:
     required_agent: "facebook_native_agent"

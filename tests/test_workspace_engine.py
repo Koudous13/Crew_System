@@ -70,6 +70,16 @@ class SafeFileWriterTest(unittest.TestCase):
             self.assertEqual(result.bytes_written, len("second\n"))
             self.assertEqual(result.content_hash, hashlib.sha256(full_content.encode()).hexdigest())
 
+    def test_temp_paths_are_unique_for_shared_job_and_target(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            writer = SafeFileWriter(temp_dir)
+
+            first = writer._tmp_path("project_manifest", "manifest.json")
+            second = writer._tmp_path("project_manifest", "manifest.json")
+
+            self.assertNotEqual(first, second)
+            self.assertEqual(first.parent, second.parent)
+
     def test_rejects_absolute_and_parent_paths(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             writer = SafeFileWriter(temp_dir)

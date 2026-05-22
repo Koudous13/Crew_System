@@ -794,7 +794,9 @@ Implementation actuelle :
 - validation humaine `POST /artifacts/validate` ;
 - validations humaines `GET /validations` ;
 - revision `POST /artifacts/revise` ;
-- provider reel disponible via `auto` ou `deepseek`, mock reserve aux tests.
+- provider reel disponible via `auto`, `gemini` ou `deepseek`.
+- `auto` utilise Gemini/Gemma uniquement ; aucun fallback automatique vers DeepSeek ou mock.
+- mock reserve aux tests explicites.
 
 ## Phase 14 - Construire L'Interface Chat
 
@@ -831,6 +833,18 @@ Gates de sortie :
 - l'utilisateur peut demander 70 posts ;
 - l'utilisateur peut reviser un batch.
 
+Implementation actuelle :
+
+- interface web Next.js dans `apps/web` ;
+- commande dev `npm run web:dev` ;
+- API backend conservee via `crew-system api serve` ;
+- liste projets `GET /projects` ;
+- creation projet depuis l'interface ;
+- conversation chat connectee a `POST /conversations/{conversation_id}/messages` ;
+- suivi d'execution via SSE ;
+- liste et lecture des artefacts ;
+- validation humaine et demande de revision depuis l'interface.
+
 ## Phase 15 - Brancher Les Providers Et Outils Avances
 
 Objectif :
@@ -839,8 +853,12 @@ Ajouter les capacites puissantes sans polluer le noyau.
 
 Extensions possibles :
 
-- provider LLM principal ;
-- provider LLM secondaire ;
+- provider LLM principal : Gemini via `GEMINI_API_KEY`, selectionnable avec `--provider gemini` ;
+- provider LLM secondaire : DeepSeek via `DEEPSEEK_API_KEY`, selectionnable avec `--provider deepseek` ;
+- `auto` : Gemini/Gemma si configure, sinon erreur de configuration claire ;
+- DeepSeek : explicite uniquement, a utiliser avec `--provider deepseek` quand la cle est saine ;
+- mock deterministe : explicite uniquement pour les tests ;
+- validation JSON locale obligatoire meme quand `GEMINI_RESPONSE_SCHEMA=false` evite les erreurs provider sur gros schemas ;
 - web research ;
 - generation image ;
 - generation video ;

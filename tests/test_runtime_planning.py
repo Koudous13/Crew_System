@@ -125,6 +125,40 @@ class RuntimePlanningTest(unittest.TestCase):
         self.assertEqual(intent.intent_type, IntentType.GENERATE_CONTENT_BATCH)
         self.assertEqual(intent.requested_volume.total_items, 3)
 
+    def test_calendar_creation_request_with_content_guard_routes_to_annual_calendar(self) -> None:
+        chat_request = make_chat_request(
+            "Cree le calendrier editorial annuel complet pour Le Robot. "
+            "Prevois les KPI de chaque semaine, mais ne produis pas les publications finales maintenant."
+        )
+
+        intent = RuleBasedIntentParser().parse(chat_request)
+
+        self.assertEqual(intent.intent_type, IntentType.GENERATE_ANNUAL_CALENDAR)
+
+    def test_project_question_uses_adaptive_router_without_static_route_failure(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            engine = WorkspaceEngine(temp_dir)
+            engine.create_project("Coach SaaS")
+            write_complete_strategy_pack(Path(temp_dir, "projects/coach_saas"))
+
+            chat_request = make_chat_request(
+                "Qu'est-ce qui est a reviser dans le projet Coach SaaS ?",
+                active_project_hint="coach_saas",
+            )
+            intent = RuleBasedIntentParser().parse(chat_request)
+            resolution = ProjectResolver(engine).resolve(chat_request, intent)
+            normalized = RequestNormalizer().normalize(chat_request, intent, resolution)
+            context = ContextLoader(engine).load("job_context_question", normalized)
+            registry = load_registry(ROOT)
+            registry.routing["intent_routing"].pop("answer_project_question", None)
+            plan = JobPlanner(registry).plan(normalized, context)
+
+            self.assertEqual(intent.intent_type, IntentType.ANSWER_PROJECT_QUESTION)
+            self.assertEqual(plan.job.status, JobStatus.QUEUED)
+            self.assertIn("strategist", plan.selected_agents)
+            self.assertIn("anti_banality_agent", plan.selected_agents)
+            self.assertIn("write_artifacts", {node.task_id for node in plan.task_graph.nodes})
+
     def test_project_resolver_detects_ambiguous_workspace(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             engine = WorkspaceEngine(temp_dir)

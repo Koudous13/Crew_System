@@ -8,12 +8,13 @@ from typing import Any, Mapping
 from uuid import uuid4
 
 from crew_system.agents.providers import runner_for_provider
+from crew_system.api.conversation import answer_conversationally
 from crew_system.api.models import ApiConversation, ApiMessage
 from crew_system.core.models import JobStatus
 from crew_system.filesystem import FileSystemError, SafeFileWriter, WorkspaceEngine, WriteMode
 from crew_system.filesystem.workspace import utc_now
 from crew_system.jobs import JobStore, LocalWorker
-from crew_system.llm import DeepSeekConfigurationError
+from crew_system.llm import LLMConfigurationError
 
 
 class ChatApiError(RuntimeError):
@@ -67,6 +68,20 @@ class ChatApiService:
             raise ChatApiError(400, str(exc), code="project_error") from exc
         return {"project": project.to_dict()}
 
+    def list_projects(self) -> dict[str, Any]:
+        try:
+            manifest = self.workspace.load_workspace_manifest()
+        except FileSystemError as exc:
+            raise ChatApiError(500, str(exc), code="workspace_error") from exc
+        projects = []
+        for project_slug in manifest.active_projects:
+            try:
+                projects.append(self.workspace.load_project_manifest(project_slug).to_dict())
+            except FileSystemError:
+                continue
+        projects.sort(key=lambda project: str(project.get("updated_at", "")), reverse=True)
+        return {"projects": projects}
+
     def create_conversation(self, *, project_slug: str = "", title: str = "") -> dict[str, Any]:
         conversation_id = new_conversation_id()
         now = utc_now()
@@ -91,12 +106,51 @@ class ChatApiService:
         )
         return {"conversation": conversation.to_dict(), "messages": []}
 
+    def list_conversations(self, *, project_slug: str = "") -> dict[str, Any]:
+        conversations_dir = self.workspace.workspace_root / "conversations"
+        conversations = []
+        if conversations_dir.exists():
+            for path in conversations_dir.glob("*/conversation.json"):
+                try:
+                    conversation = ApiConversation.from_dict(json.loads(path.read_text(encoding="utf-8")))
+                except Exception:
+                    continue
+                if project_slug and conversation.project_slug != project_slug:
+                    continue
+                conversations.append(conversation.to_dict())
+        conversations.sort(key=lambda conversation: str(conversation.get("updated_at", "")), reverse=True)
+        return {"conversations": conversations}
+
     def get_conversation(self, conversation_id: str) -> dict[str, Any]:
         conversation = self._load_conversation(conversation_id)
         return {
             "conversation": conversation.to_dict(),
             "messages": self._read_messages(conversation_id),
         }
+
+    def append_assistant_message(
+        self,
+        *,
+        conversation_id: str,
+        content: str,
+        job_id: str = "",
+        project_slug: str = "",
+    ) -> dict[str, Any]:
+        conversation = self._load_conversation(conversation_id)
+        if not content or not content.strip():
+            raise ChatApiError(400, "content is required", code="missing_message")
+        target_project = project_slug or conversation.project_slug
+        message = ApiMessage.build(
+            message_id=new_message_id(),
+            conversation_id=conversation_id,
+            role="assistant",
+            content=content.strip(),
+            job_id=job_id,
+            metadata={"project_slug": target_project, "persisted_from_ui": True},
+        )
+        self._append_message(message)
+        self._touch_conversation(conversation, target_project)
+        return {"message": message.to_dict(), "conversation": conversation.to_dict()}
 
     def send_message(
         self,
@@ -123,6 +177,39 @@ class ChatApiService:
         )
         self._append_message(user_message)
 
+        chat_only_response = answer_conversationally(
+            message=message,
+            conversation_messages=self._read_messages(conversation_id),
+            workspace=self.workspace,
+            project_slug=target_project,
+            provider=provider or self.default_provider,
+            env=self.env,
+        )
+        if chat_only_response:
+            assistant_message = ApiMessage.build(
+                message_id=new_message_id(),
+                conversation_id=conversation_id,
+                role="assistant",
+                content=chat_only_response.response,
+                metadata={
+                    "mode": "chat",
+                    "project_slug": target_project,
+                    "provider": chat_only_response.provider,
+                    "suggested_actions": chat_only_response.suggested_actions,
+                },
+            )
+            self._append_message(assistant_message)
+            self._touch_conversation(conversation, target_project)
+            return {
+                "conversation": conversation.to_dict(),
+                "message": user_message.to_dict(),
+                "assistant_message": assistant_message.to_dict(),
+                "job": None,
+                "provider": chat_only_response.provider,
+                "run_async": False,
+                "mode": "chat",
+            }
+
         job_payload = self.start_job(
             project_slug=target_project,
             message=message.strip(),
@@ -134,7 +221,7 @@ class ChatApiService:
             message_id=new_message_id(),
             conversation_id=conversation_id,
             role="assistant",
-            content=response_message_for_job(stored_job["status"], run_async),
+            content=response_message_for_job(stored_job, run_async),
             job_id=stored_job["job_id"],
             metadata={
                 "provider": job_payload["provider"],
@@ -170,7 +257,7 @@ class ChatApiService:
                 provider or self.default_provider,
                 env=self.env,
             )
-        except DeepSeekConfigurationError as exc:
+        except LLMConfigurationError as exc:
             raise ChatApiError(400, str(exc), code="provider_configuration_error") from exc
 
         worker = LocalWorker(
@@ -491,9 +578,57 @@ def content_type_for(path: str) -> str:
     return "text/plain"
 
 
-def response_message_for_job(status: str, run_async: bool) -> str:
+def lightweight_chat_response(message: str) -> str:
+    folded = fold_chat_text(message).strip(" .!?\t\r\n")
+    folded = re.sub(r"\s+", " ", folded)
+    if not folded:
+        return ""
+    greeting = r"(salut|bonjour|bonsoir|hello|hey|coucou|yo)"
+    if re.fullmatch(rf"{greeting}(\s+(ca va|comment ca va|tu vas bien))?", folded):
+        return (
+            "Salut Koudous. Je suis prêt. Choisis une demande dans le parcours "
+            "ou écris directement ce que tu veux produire : base stratégique, calendrier, "
+            "batch de posts, révision ou analyse."
+        )
+    acknowledgements = {
+        "ok",
+        "okay",
+        "d accord",
+        "daccord",
+        "merci",
+        "merci beaucoup",
+        "super",
+        "nickel",
+        "parfait",
+        "top",
+        "cool",
+        "ca marche",
+        "tres bien",
+        "bien recu",
+    }
+    if folded in acknowledgements:
+        return (
+            "Parfait. Je reste prêt. Lance une demande précise quand tu veux "
+            "et je déclencherai les bons agents seulement si un vrai travail est nécessaire."
+        )
+    return ""
+
+
+def fold_chat_text(value: str) -> str:
+    import unicodedata
+
+    normalized = unicodedata.normalize("NFKD", value)
+    ascii_text = normalized.encode("ascii", "ignore").decode("ascii")
+    return ascii_text.lower()
+
+
+def response_message_for_job(stored_job: Mapping[str, Any], run_async: bool) -> str:
+    status = str(stored_job.get("status", ""))
+    assistant_message = str(stored_job.get("assistant_message", "")).strip()
+    if assistant_message and (not run_async or status == "waiting_for_user"):
+        return assistant_message
     if run_async:
-        return "Job lance en arriere-plan. Tu peux suivre sa progression et lire les artefacts produits."
+        return "Je lance l'atelier interne. Les agents vont analyser, se repondre et ecrire les fichiers utiles."
     if status in {"completed", "needs_revision"}:
         return "Job termine. Les artefacts sont disponibles."
     return "Job termine avec un statut a verifier."

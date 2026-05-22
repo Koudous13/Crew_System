@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
 from typing import Any
+from uuid import uuid4
 
 from crew_system.core.models import ModelValidationError, RuntimeModel
 
@@ -167,7 +168,7 @@ class SafeFileWriter:
         safe_filename = "".join(
             char if char.isalnum() or char in "._-" else "_" for char in filename
         )
-        return self.tmp_root / safe_job_id / f"{safe_filename}.tmp"
+        return self.tmp_root / safe_job_id / f"{uuid4().hex}_{safe_filename}.tmp"
 
     def _copy_existing_to_version(self, target: Path) -> Path:
         versions_dir = target.parent / "versions"

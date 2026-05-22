@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import unicodedata
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from uuid import uuid4
@@ -66,13 +67,16 @@ class AgentRouter:
         intent = request.intent
         include_optional = should_read_optional_routes(request)
         include_conditional = should_read_conditional_routes(request)
-        selection = self.registry.agents_for_intent(
-            intent.intent_type,
-            platforms=[platform.value for platform in intent.platforms],
-            include_optional=include_optional,
-            include_conditional=include_conditional,
-        )
-        return AgentSelection(
+        try:
+            selection = self.registry.agents_for_intent(
+                intent.intent_type,
+                platforms=[platform.value for platform in intent.platforms],
+                include_optional=include_optional,
+                include_conditional=include_conditional,
+            )
+        except RegistryError:
+            selection = adaptive_agent_selection(self.registry, request)
+        filtered_selection = AgentSelection(
             intent_type=selection.intent_type,
             platforms=selection.platforms,
             required=selection.required,
@@ -96,6 +100,7 @@ class AgentRouter:
                 ]
             },
         )
+        return augment_agent_selection(self.registry, filtered_selection, request)
 
     def explain(self, selection: AgentSelection) -> dict[str, str]:
         reasons: dict[str, str] = {}
@@ -304,6 +309,162 @@ def build_agent_nodes(
             )
         )
     return nodes
+
+
+def adaptive_agent_selection(
+    registry: AgentRegistry,
+    request: NormalizedRequest,
+) -> AgentSelection:
+    intent_type = request.intent.intent_type
+    known_agents = set(registry.agent_ids())
+    required: list[str] = []
+    optional: list[str] = []
+    platforms: list[str] = []
+    platform_required: dict[str, list[str]] = {}
+
+    def add_required(agent_id: str) -> None:
+        if agent_id in known_agents:
+            append_unique(required, agent_id)
+
+    def add_optional(agent_id: str) -> None:
+        if agent_id in known_agents and agent_id not in required:
+            append_unique(optional, agent_id)
+
+    def add_platform(platform: str, agent_id: str) -> None:
+        if agent_id not in known_agents:
+            return
+        append_unique(platforms, platform)
+        platform_required.setdefault(platform, [])
+        append_unique(platform_required[platform], agent_id)
+
+    if intent_type in {
+        IntentType.ANSWER_PROJECT_QUESTION,
+        IntentType.SHOW_JOB_STATUS,
+        IntentType.LIST_PROJECTS,
+        IntentType.ARCHIVE_PROJECT_OR_BATCH,
+    }:
+        add_required("strategist")
+    elif intent_type is IntentType.REVISE_DOCUMENT:
+        add_required("strategist")
+        add_optional("risk_reviewer")
+        add_optional("anti_banality_agent")
+    else:
+        add_required("strategist")
+
+    augment_agent_lists_from_text(
+        request,
+        known_agents=known_agents,
+        add_required=add_required,
+        add_optional=add_optional,
+        add_platform=add_platform,
+    )
+
+    if not required and not optional and not platform_required:
+        add_required("strategist")
+    if not required and not optional and not platform_required and known_agents:
+        required.append(sorted(known_agents)[0])
+
+    return AgentSelection(
+        intent_type=intent_type.value,
+        platforms=platforms,
+        required=required,
+        platform_required=platform_required,
+        optional=optional,
+        conditional={},
+    )
+
+
+def augment_agent_selection(
+    registry: AgentRegistry,
+    selection: AgentSelection,
+    request: NormalizedRequest,
+) -> AgentSelection:
+    known_agents = set(registry.agent_ids())
+    required = list(selection.required)
+    optional = list(selection.optional)
+    platforms = list(selection.platforms)
+    platform_required = {platform: list(agents) for platform, agents in selection.platform_required.items()}
+
+    def add_required(agent_id: str) -> None:
+        if agent_id in known_agents:
+            append_unique(required, agent_id)
+
+    def add_optional(agent_id: str) -> None:
+        if agent_id in known_agents and agent_id not in required:
+            append_unique(optional, agent_id)
+
+    def add_platform(platform: str, agent_id: str) -> None:
+        if agent_id not in known_agents:
+            return
+        append_unique(platforms, platform)
+        platform_required.setdefault(platform, [])
+        append_unique(platform_required[platform], agent_id)
+
+    augment_agent_lists_from_text(
+        request,
+        known_agents=known_agents,
+        add_required=add_required,
+        add_optional=add_optional,
+        add_platform=add_platform,
+    )
+    return AgentSelection(
+        intent_type=selection.intent_type,
+        platforms=platforms,
+        required=required,
+        platform_required=platform_required,
+        optional=optional,
+        conditional=selection.conditional,
+    )
+
+
+def augment_agent_lists_from_text(
+    request: NormalizedRequest,
+    *,
+    known_agents: set[str],
+    add_required,
+    add_optional,
+    add_platform,
+) -> None:
+    _ = known_agents
+    text = searchable_text(request.normalized_message)
+    for platform in request.intent.platforms:
+        if platform is Platform.FACEBOOK:
+            add_platform("facebook", "facebook_native_agent")
+        if platform is Platform.LINKEDIN:
+            add_platform("linkedin", "linkedin_native_agent")
+
+    if has_any(text, ["facebook", "meta"]):
+        add_platform("facebook", "facebook_native_agent")
+    if has_any(text, ["linkedin", "linked in"]):
+        add_platform("linkedin", "linkedin_native_agent")
+    if has_any(text, ["growth", "hack", "viral", "leads", "acquisition", "amplification", "commentaire"]):
+        add_optional("growth_hacker")
+        add_optional("experimentation_agent")
+    if has_any(text, ["psychologie", "emotion", "desir", "douleur", "audience", "persona", "peur"]):
+        add_optional("audience_psychologist")
+    if has_any(text, ["influence", "manipulation", "persuasion", "croyance", "preuve", "tension"]):
+        add_optional("influence_architect")
+    if has_any(text, ["positionnement", "offre", "premium", "promesse", "marche"]):
+        add_optional("positioning_agent")
+    if has_any(text, ["calendrier", "editorial", "annee", "mois", "semaine", "planning"]):
+        add_optional("calendar_architect")
+    if has_any(text, ["hook", "accroche", "titre", "angle"]):
+        add_optional("hook_master")
+    if has_any(text, ["publication", "post", "contenu", "copy", "texte", "caption"]):
+        add_optional("copywriter")
+    if has_any(text, ["image", "visuel", "carrousel", "creative", "design"]):
+        add_optional("creative_director")
+    if has_any(text, ["video", "script", "reel", "short"]):
+        add_optional("video_agent")
+    if has_any(text, ["risque", "legal", "conformite", "claim", "garanti", "sante", "finance"]):
+        add_optional("risk_reviewer")
+    if has_any(text, ["banal", "generic", "plat", "reviser", "revision", "ameliorer", "corriger"]):
+        add_optional("anti_banality_agent")
+
+
+def searchable_text(value: str) -> str:
+    normalized = unicodedata.normalize("NFKD", value.lower())
+    return "".join(character for character in normalized if not unicodedata.combining(character))
 
 
 def resolve_agent_dependencies(

@@ -10,6 +10,7 @@ if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
 from crew_system.core.models import JobStatus
+from crew_system.agents import MockAgentRunner
 from crew_system.filesystem import WorkspaceEngine
 from crew_system.jobs import JobStore, LocalWorker
 
@@ -42,7 +43,11 @@ class JobStoreWorkerTest(unittest.TestCase):
             engine = WorkspaceEngine(temp_dir)
             project = engine.create_project("Coach SaaS")
             seed_strategy_context(Path(project.root_path))
-            worker = LocalWorker(repo_root=ROOT, workspace_root=temp_dir)
+            worker = LocalWorker(
+                repo_root=ROOT,
+                workspace_root=temp_dir,
+                runner=MockAgentRunner(),
+            )
 
             stored = worker.enqueue(
                 project_slug="coach_saas",
@@ -53,11 +58,18 @@ class JobStoreWorkerTest(unittest.TestCase):
             checkpoint = worker.store.load_checkpoint("coach_saas", stored.job_id)
 
             project_root = Path(temp_dir, "projects/coach_saas")
+            progress_events = read_jsonl(project_root / f"logs/jobs/{stored.job_id}/progress_events.jsonl")
             self.assertEqual(result.stored_job.job_id, stored.job_id)
             self.assertEqual(result.local_result.job.job_id, stored.job_id)
             self.assertIn(loaded.status, {JobStatus.COMPLETED, JobStatus.NEEDS_REVISION})
             self.assertTrue(loaded.artifacts_created)
             self.assertIsNotNone(checkpoint)
+            self.assertTrue(
+                any(
+                    str(event["current_phase"]).startswith("agent:copywriter:chunk:")
+                    for event in progress_events
+                )
+            )
             self.assertTrue((project_root / f"logs/jobs/{stored.job_id}/job_state.json").exists())
             self.assertTrue((project_root / f"outputs/batches/{stored.job_id}/content_batch.md").exists())
             self.assertTrue((project_root / f"outputs/batches/{stored.job_id}/facebook_posts_ready.md").exists())

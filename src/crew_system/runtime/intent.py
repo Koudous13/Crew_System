@@ -237,7 +237,20 @@ def detect_intent_type(
     has_content = bool(words & CONTENT_WORDS)
     has_project = bool(words & PROJECT_WORDS)
     has_strategy = any(token in folded_message for token in STRATEGY_WORDS)
-    has_calendar = bool(re.search(r"\b(calendrier|editorial|planning|annuel|annuelle)\b", folded_message))
+    calendar_match = re.search(r"\b(calendrier|editorial|planning|annuel|annuelle)\b", folded_message)
+    content_match = re.search(r"\b(posts?|publications?|contenus?|carrousels?|visuels?|textes?)\b", folded_message)
+    has_calendar = bool(calendar_match)
+    calendar_is_primary_object = bool(
+        calendar_match
+        and (
+            not content_match
+            or calendar_match.start() < content_match.start()
+        )
+        and re.search(
+            r"\b(cree|creer|genere|generer|construis|batir|prepare|etablis|planifie|fais)\b.{0,80}\b(calendrier|planning|editorial|annuel|annuelle)\b",
+            folded_message,
+        )
+    )
     has_revision = bool(re.search(r"\b(revise|reviser|corrige|corriger|modifie|modifier|refais|ameliorer)\b", folded_message))
     has_performance = bool(re.search(r"\b(performance|resultats|analytics|kpi|analyse|analyser|rapport)\b", folded_message))
     has_status = bool(re.search(r"\b(statut|status|etat|avancement)\b", folded_message))
@@ -249,6 +262,9 @@ def detect_intent_type(
 
     if has_status and "job" in words:
         return IntentType.SHOW_JOB_STATUS, 9, ambiguity
+
+    if calendar_is_primary_object:
+        return IntentType.GENERATE_ANNUAL_CALENDAR, 9, ambiguity
 
     if has_performance:
         return IntentType.ANALYZE_PERFORMANCE, 9, ambiguity

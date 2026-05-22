@@ -395,54 +395,262 @@ def render_markdown_payload(
     agents_used: list[str],
     status: ArtifactStatus,
 ) -> str:
+    if target.relative_path.startswith("reviews/quality_reviews/"):
+        return render_quality_markdown_payload(plan, target, quality_report, agents_used, status)
+    return render_human_markdown_payload(plan, target, quality_report, agent_outputs, agents_used, status)
+
+
+def render_human_markdown_payload(
+    plan: WritePlan,
+    target: WriteTarget,
+    quality_report: QualityReport,
+    agent_outputs: dict[str, AgentOutput],
+    agents_used: list[str],
+    status: ArtifactStatus,
+) -> str:
+    selected_outputs = outputs_for_markdown_target(target.relative_path, agent_outputs)
     lines = [
-        f"# Crew_System Deliverable",
+        f"# {human_title_for_path(target.relative_path)}",
         "",
         f"- job_id: {plan.job_id}",
-        f"- project_slug: {plan.project_slug}",
-        f"- path: {target.relative_path}",
-        f"- status: {status.value}",
-        f"- agents_used: {', '.join(agents_used) if agents_used else 'none'}",
-        f"- quality_decision: {quality_report.decision.value}",
-        f"- quality_score: {quality_report.overall_score}",
-        "",
-        "## Agent Outputs",
+        f"- Projet : {plan.project_slug}",
+        f"- Statut : {human_status(status)}",
+        f"- Score qualité : {quality_report.overall_score}/10",
         "",
     ]
-    if not agent_outputs:
-        lines.append("No agent output was provided.")
-    for agent_id, output in agent_outputs.items():
-        lines.extend(
-            [
-                f"### {agent_id}",
-                "",
-                f"- schema: {output.schema_name}",
-                f"- quality_score: {output.quality_score}",
-                f"- confidence_score: {output.confidence_score}",
-                "",
-                "```json",
-                json.dumps(output.payload, indent=2, sort_keys=True),
-                "```",
-                "",
-            ]
-        )
-    lines.extend(
-        [
-            "## Quality Report",
-            "",
-            f"- decision: {quality_report.decision.value}",
-            f"- overall_score: {quality_report.overall_score}",
-            f"- confidence_score: {quality_report.confidence_score}",
-            "",
-        ]
-    )
+    if agents_used:
+        lines.extend(["## Agents mobilisés", ""])
+        lines.append(", ".join(agent_id.replace("_", " ") for agent_id in agents_used))
+        lines.append("")
+
+    if not selected_outputs:
+        lines.extend(["## Contenu", "", "Aucun contenu exploitable n'a été fourni pour ce document.", ""])
+    for output in selected_outputs:
+        lines.extend(render_agent_output_as_markdown(output))
+
     if quality_report.revision_notes:
-        lines.append("### Revision Notes")
+        lines.extend(["## Points à revoir", ""])
+        for note in quality_report.revision_notes[:8]:
+            lines.append(f"- {clean_text(note)}")
+        lines.append("")
+    return "\n".join(lines).rstrip() + "\n"
+
+
+def render_quality_markdown_payload(
+    plan: WritePlan,
+    target: WriteTarget,
+    quality_report: QualityReport,
+    agents_used: list[str],
+    status: ArtifactStatus,
+) -> str:
+    lines = [
+        "# Rapport qualité interne",
+        "",
+        f"- Job : {plan.job_id}",
+        f"- Projet : {plan.project_slug}",
+        f"- Chemin : {target.relative_path}",
+        f"- Statut : {human_status(status)}",
+        f"- Agents : {', '.join(agents_used) if agents_used else 'aucun'}",
+        f"- Décision qualité : {quality_report.decision.value}",
+        f"- Score qualité : {quality_report.overall_score}/10",
+        "",
+        "## Synthèse",
+        "",
+    ]
+    if quality_report.revision_notes:
+        lines.append("### Notes de révision")
         lines.append("")
         for note in quality_report.revision_notes:
             lines.append(f"- {note}")
         lines.append("")
+    else:
+        lines.append("Aucune note de révision.")
+        lines.append("")
     return "\n".join(lines)
+
+
+def outputs_for_markdown_target(path: str, agent_outputs: dict[str, AgentOutput]) -> list[AgentOutput]:
+    lowered = path.lower()
+    mapping = [
+        ("strategic_diagnosis", ["strategist"]),
+        ("audience_intelligence", ["audience_psychologist"]),
+        ("positioning", ["positioning_agent"]),
+        ("influence_architecture", ["influence_architect"]),
+        ("growth_system", ["growth_hacker"]),
+        ("facebook_strategy", ["facebook_native_agent"]),
+        ("linkedin_strategy", ["linkedin_native_agent"]),
+        ("annual_editorial_calendar", ["calendar_architect"]),
+        ("annual_calendar", ["calendar_architect"]),
+        ("calendar", ["calendar_architect"]),
+        ("content_batch", ["copywriter", "hook_master", "creative_director", "risk_reviewer"]),
+        ("revision", ["copywriter", "strategist", "anti_banality_agent", "risk_reviewer"]),
+    ]
+    for token, agent_ids in mapping:
+        if token in lowered:
+            selected = [agent_outputs[agent_id] for agent_id in agent_ids if agent_id in agent_outputs]
+            return selected or list(agent_outputs.values())
+    if "campaign_pack" in lowered:
+        preferred_order = [
+            "strategist",
+            "audience_psychologist",
+            "positioning_agent",
+            "influence_architect",
+            "growth_hacker",
+            "facebook_native_agent",
+            "linkedin_native_agent",
+            "experimentation_agent",
+            "risk_reviewer",
+            "anti_banality_agent",
+        ]
+        ordered = [agent_outputs[agent_id] for agent_id in preferred_order if agent_id in agent_outputs]
+        ordered.extend(output for agent_id, output in agent_outputs.items() if agent_id not in preferred_order)
+        return ordered
+    return list(agent_outputs.values())
+
+
+def render_agent_output_as_markdown(output: AgentOutput) -> list[str]:
+    lines = [
+        f"## {human_agent_title(output.agent_id)}",
+        "",
+    ]
+    for key, value in output.payload.items():
+        if key == "self_evaluation":
+            continue
+        lines.extend(render_value_markdown(value, heading_label(key), 3))
+    return lines
+
+
+def render_value_markdown(value: Any, title: str, level: int) -> list[str]:
+    heading = "#" * min(max(level, 2), 6)
+    lines = [f"{heading} {title}", ""]
+    if isinstance(value, dict):
+        for key, item in value.items():
+            lines.extend(render_item_markdown(key, item, level + 1))
+    elif isinstance(value, list):
+        lines.extend(render_list_markdown(value, level + 1))
+    else:
+        text = clean_text(value)
+        if text:
+            lines.extend([text, ""])
+    return lines
+
+
+def render_item_markdown(key: str, value: Any, level: int) -> list[str]:
+    label = heading_label(key)
+    if isinstance(value, dict):
+        return render_value_markdown(value, label, level)
+    if isinstance(value, list):
+        lines = [f"{'#' * min(max(level, 2), 6)} {label}", ""]
+        lines.extend(render_list_markdown(value, level + 1))
+        return lines
+    text = clean_text(value)
+    return [f"- **{label}** : {text}", ""] if text else []
+
+
+def render_list_markdown(values: list[Any], level: int) -> list[str]:
+    lines: list[str] = []
+    for index, item in enumerate(values, start=1):
+        if isinstance(item, dict):
+            lines.extend(render_value_markdown(item, f"Élément {index}", level))
+        elif isinstance(item, list):
+            lines.extend(render_list_markdown(item, level + 1))
+        else:
+            text = clean_text(item)
+            if text:
+                lines.append(f"- {text}")
+    if lines and lines[-1] != "":
+        lines.append("")
+    return lines
+
+
+def human_title_for_path(path: str) -> str:
+    filename = path.rsplit("/", 1)[-1].rsplit(".", 1)[0]
+    labels = {
+        "campaign_pack": "Base stratégique complète",
+        "strategic_diagnosis": "Diagnostic stratégique",
+        "audience_intelligence": "Intelligence d'audience",
+        "positioning": "Positionnement",
+        "influence_architecture": "Architecture d'influence",
+        "growth_system": "Système de croissance",
+        "facebook_strategy": "Stratégie Facebook",
+        "linkedin_strategy": "Stratégie LinkedIn",
+        "content_batch": "Batch de contenus",
+        "revision": "Révision",
+    }
+    return labels.get(filename, heading_label(filename))
+
+
+def human_agent_title(agent_id: str) -> str:
+    labels = {
+        "strategist": "Stratégie",
+        "audience_psychologist": "Psychologie d'audience",
+        "positioning_agent": "Positionnement",
+        "influence_architect": "Influence",
+        "growth_hacker": "Growth",
+        "facebook_native_agent": "Facebook",
+        "linkedin_native_agent": "LinkedIn",
+        "experimentation_agent": "Expérimentation",
+        "risk_reviewer": "Risques et garde-fous",
+        "anti_banality_agent": "Anti-banalité",
+        "copywriter": "Rédaction",
+        "hook_master": "Hooks",
+        "creative_director": "Direction créative",
+    }
+    return labels.get(agent_id, heading_label(agent_id))
+
+
+def heading_label(value: str) -> str:
+    labels = {
+        "strategic_diagnosis": "Diagnostic stratégique",
+        "big_idea_seed": "Idée centrale",
+        "hidden_problem": "Problème caché",
+        "market_noise": "Bruit du marché",
+        "perception_to_change": "Perception à changer",
+        "perception_to_shift": "Perception à déplacer",
+        "strongest_acceptable_angle": "Angle fort acceptable",
+        "strongest_lever": "Levier principal",
+        "decision_to_trigger": "Décision à déclencher",
+        "do_not_soften": "À ne pas adoucir",
+        "audience_intelligence": "Intelligence d'audience",
+        "core_identity_desires": "Désirs identitaires",
+        "deep_fears": "Peurs profondes",
+        "hidden_desires": "Désirs cachés",
+        "hidden_pains": "Douleurs cachées",
+        "language_triggers": "Langage déclencheur",
+        "visible_pains": "Douleurs visibles",
+        "message_system": "Système de message",
+        "core_promise": "Promesse centrale",
+        "brand_voice": "Voix de marque",
+        "key_messages": "Messages clés",
+        "proof_points": "Preuves",
+        "influence_architecture": "Architecture d'influence",
+        "growth_system": "Système de croissance",
+        "facebook_strategy": "Stratégie Facebook",
+        "linkedin_strategy": "Stratégie LinkedIn",
+        "annual_editorial_calendar": "Calendrier éditorial annuel",
+        "annual_calendar": "Calendrier éditorial annuel",
+        "content_pillars": "Piliers de contenu",
+        "conversion_path": "Chemin de conversion",
+        "tone_of_voice": "Tonalité",
+        "risk_review": "Revue des risques",
+        "overall_assessment": "Évaluation générale",
+    }
+    if value in labels:
+        return labels[value]
+    cleaned = value.replace("_", " ").replace("-", " ").strip()
+    return cleaned[:1].upper() + cleaned[1:]
+
+
+def human_status(status: ArtifactStatus) -> str:
+    labels = {
+        ArtifactStatus.DRAFT: "brouillon",
+        ArtifactStatus.READY_FOR_HUMAN_REVIEW: "prêt à relire",
+        ArtifactStatus.NEEDS_REVISION: "à réviser",
+        ArtifactStatus.REJECTED: "rejeté",
+        ArtifactStatus.APPROVED_BY_HUMAN: "validé",
+        ArtifactStatus.ARCHIVED: "archivé",
+    }
+    return labels.get(status, status.value)
 
 
 def artifact_status_for_quality(report: QualityReport) -> ArtifactStatus:
