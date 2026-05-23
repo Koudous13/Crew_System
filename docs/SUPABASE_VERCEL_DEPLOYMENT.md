@@ -46,8 +46,10 @@ SUPABASE_SERVICE_ROLE_KEY=ta_service_role_key
 GEMINI_API_KEY=ta_cle_google_ai_studio
 GEMINI_MODEL=gemma-4-26b-a4b-it
 GEMINI_STEP_TIMEOUT_SECONDS=28
+GEMINI_RESCUE_TIMEOUT_SECONDS=18
 GEMINI_CHAT_TIMEOUT_SECONDS=15
 GEMINI_MAX_OUTPUT_TOKENS=2048
+GEMINI_RESCUE_MAX_OUTPUT_TOKENS=900
 GEMINI_RESPONSE_SCHEMA=false
 ```
 
@@ -99,4 +101,6 @@ Le cloud gratuit ne garde pas de worker permanent. Pour éviter les timeouts Ver
 5. génération IA avec budget court ;
 6. écriture des documents dans Supabase.
 
-Si Gemma dépasse le budget défini par `GEMINI_STEP_TIMEOUT_SECONDS`, le job échoue proprement dans l'interface au lieu de produire une erreur Vercel `504`.
+Si Gemma dépasse le budget défini par `GEMINI_STEP_TIMEOUT_SECONDS`, Crew_System tente automatiquement un mode secours compact avec `GEMINI_RESCUE_TIMEOUT_SECONDS`.
+
+Si même le mode secours dépasse le budget, le job passe en `waiting_for_user` avec une action de relance courte au lieu de produire une erreur Vercel `504`.

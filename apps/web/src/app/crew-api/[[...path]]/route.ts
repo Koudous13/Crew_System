@@ -546,23 +546,35 @@ async function runJobStep(supabase: SupabaseClient, projectSlug: string, jobId: 
     const completed = await runGeminiJob(supabase, job, job.request_message);
     return { job: jobToApi(completed), events: (await jobEvents(supabase, projectSlug, jobId)).map(eventToApi) };
   } catch (error) {
+    const timeout = isApiError(error, "gemini_step_timeout");
     const errorMessage = error instanceof Error ? error.message : "Unknown Gemini error";
     await appendEvent(
       supabase,
       job.job_id,
       projectSlug,
-      "failed",
-      "Le job a échoué pendant l'exécution IA, sans bloquer l'interface.",
-      100,
-      [],
+      timeout ? "waiting_for_user" : "failed",
+      timeout
+        ? "Gemma est trop lent sur cette demande. Le job est mis en pause proprement."
+        : "Le job a échoué pendant l'exécution IA, sans bloquer l'interface.",
+      timeout ? 78 : 100,
+      timeout ? ["content_architect", "file_architect"] : [],
     );
     const { data, error: updateError } = await supabase
       .from("crew_jobs")
       .update({
-        status: "failed",
+        status: timeout ? "waiting_for_user" : "failed",
         error: errorMessage,
-        percent_estimate: 100,
-        current_phase: "failed",
+        assistant_message: timeout
+          ? "Gemma met trop de temps à produire ce livrable sur le plan gratuit. Je l'ai mis en pause au lieu de casser l'interface."
+          : "",
+        suggested_user_reply: timeout
+          ? "Relance en version ultra courte : produis seulement le plan et 3 actions prioritaires."
+          : "",
+        required_questions: timeout
+          ? ["Veux-tu relancer en version ultra courte pour rester sous la limite Vercel ?"]
+          : [],
+        percent_estimate: timeout ? 78 : 100,
+        current_phase: timeout ? "waiting_for_user" : "failed",
         updated_at: new Date().toISOString(),
       })
       .eq("job_id", job.job_id)
@@ -607,12 +619,32 @@ async function runGeminiJob(supabase: SupabaseClient, job: JobRow, message: stri
     "content_architect",
     "file_architect",
   ]);
-  const output = await callGeminiForJob({
-    project,
-    request: message,
-    recentMessages,
-    projectArtifacts,
-  });
+  let output: GeminiJobOutput;
+  try {
+    output = await callGeminiForJob({
+      project,
+      request: message,
+      recentMessages,
+      projectArtifacts,
+    });
+  } catch (error) {
+    if (!isApiError(error, "gemini_step_timeout")) {
+      throw error;
+    }
+    await appendEvent(
+      supabase,
+      job.job_id,
+      job.project_slug,
+      "running",
+      "Gemma est lent. Passage automatique en mode compact de secours.",
+      72,
+      ["content_architect", "file_architect"],
+    );
+    output = await callGeminiRescueForJob({
+      project,
+      request: message,
+    });
+  }
   await appendEvent(supabase, job.job_id, job.project_slug, "running", "File architect : écriture des documents lisibles.", 76, [
     "file_architect",
   ]);
@@ -725,6 +757,49 @@ async function callGeminiForJob(input: {
   return callGeminiJson(prompt, {
     timeoutSeconds: numberEnv("GEMINI_STEP_TIMEOUT_SECONDS", process.env.VERCEL ? 28 : 120),
     maxOutputTokens: numberEnv("GEMINI_MAX_OUTPUT_TOKENS", 2048),
+  });
+}
+
+async function callGeminiRescueForJob(input: {
+  project: ProjectRow;
+  request: string;
+}) {
+  const prompt = [
+    "Tu es Crew_System Cloud en mode secours.",
+    "Le premier appel IA a dépassé le budget Vercel. Tu dois produire un livrable compact, réel et utile.",
+    "Réponds en français avec un JSON valide uniquement.",
+    "Ne cherche pas à être exhaustif. Donne le meilleur noyau stratégique exploitable en moins de 700 mots.",
+    "",
+    "Projet :",
+    JSON.stringify({
+      project_slug: input.project.project_slug,
+      project_name: input.project.project_name,
+      description: input.project.description,
+    }),
+    "",
+    "Demande utilisateur :",
+    input.request.slice(0, 1600),
+    "",
+    "Format obligatoire :",
+    JSON.stringify({
+      assistant_message: "message court pour le chat",
+      suggested_user_reply: "prochaine demande utile à proposer",
+      agents_used: ["directeur_strategique", "growth_hacker", "content_architect", "file_architect"],
+      missing_information: [],
+      required_questions: [],
+      blocked_reasons: [],
+      artifacts: [
+        {
+          path: "outputs/cloud/livrable_compact.md",
+          content_type: "text/markdown",
+          content: "# Livrable compact\n\nMarkdown court, clair, actionnable.",
+        },
+      ],
+    }),
+  ].join("\n");
+  return callGeminiJson(prompt, {
+    timeoutSeconds: numberEnv("GEMINI_RESCUE_TIMEOUT_SECONDS", process.env.VERCEL ? 18 : 45),
+    maxOutputTokens: numberEnv("GEMINI_RESCUE_MAX_OUTPUT_TOKENS", 900),
   });
 }
 
@@ -1221,6 +1296,10 @@ function throwIfSupabaseError(error: { message?: string } | null) {
   if (error) {
     throw new ApiError(500, error.message ?? "Supabase request failed", "supabase_error");
   }
+}
+
+function isApiError(error: unknown, code: string) {
+  return error instanceof ApiError && error.code === code;
 }
 
 function newId(prefix: string) {
