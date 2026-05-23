@@ -13,6 +13,7 @@ Start here:
 - [Agent Specs](docs/agents/README.md)
 - [Campaign Pack Contract](docs/CAMPAIGN_PACK_CONTRACT.md)
 - [Content Batch Contract](docs/CONTENT_BATCH_CONTRACT.md)
+- [Supabase + Vercel Deployment](docs/SUPABASE_VERCEL_DEPLOYMENT.md)
 
 ## LLM provider
 
@@ -40,3 +41,23 @@ Execution manuelle :
 ```powershell
 python -m crew_system run content-batch --project koudous_daouda_le_robot --provider gemini --count 10
 ```
+
+## Cloud gratuit
+
+La voie cloud gratuite recommandee est maintenant Vercel + Supabase :
+
+- Vercel heberge l'interface Next.js et le backend `/crew-api` ;
+- Supabase stocke projets, conversations, jobs, progression et documents Markdown ;
+- Gemini/Gemma execute les agents reels.
+
+Variables minimales cote Vercel :
+
+```env
+SUPABASE_URL=...
+SUPABASE_SERVICE_ROLE_KEY=...
+GEMINI_API_KEY=...
+GEMINI_MODEL=gemma-4-26b-a4b-it
+GEMINI_RESPONSE_SCHEMA=false
+```
+
+Le schema SQL a executer dans Supabase est dans `supabase/schema.sql`.
