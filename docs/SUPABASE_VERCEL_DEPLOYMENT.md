@@ -45,6 +45,9 @@ SUPABASE_URL=https://ton-projet.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=ta_service_role_key
 GEMINI_API_KEY=ta_cle_google_ai_studio
 GEMINI_MODEL=gemma-4-26b-a4b-it
+GEMINI_STEP_TIMEOUT_SECONDS=28
+GEMINI_CHAT_TIMEOUT_SECONDS=15
+GEMINI_MAX_OUTPUT_TOKENS=2048
 GEMINI_RESPONSE_SCHEMA=false
 ```
 
@@ -87,6 +90,13 @@ Ensuite, dans l'interface :
 
 ## 6. Limite actuelle assumée
 
-Cette première version cloud exécute le job dans la requête Vercel au lieu d'un worker permanent. C'est volontaire : on évite les services payants.
+Le cloud gratuit ne garde pas de worker permanent. Pour éviter les timeouts Vercel, le job avance donc par étapes courtes :
 
-La prochaine amélioration sera de découper les jobs longs en étapes relançables afin que l'interface puisse avancer agent par agent sans dépendre d'un serveur permanent.
+1. création rapide du job ;
+2. cadrage ;
+3. analyse ;
+4. préparation ;
+5. génération IA avec budget court ;
+6. écriture des documents dans Supabase.
+
+Si Gemma dépasse le budget défini par `GEMINI_STEP_TIMEOUT_SECONDS`, le job échoue proprement dans l'interface au lieu de produire une erreur Vercel `504`.

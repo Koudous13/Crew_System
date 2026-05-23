@@ -118,6 +118,7 @@ export function CrewCommandCenter() {
   const streamRef = useRef<EventSource | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const pollingKeyRef = useRef("");
+  const stepRunningRef = useRef(false);
   const finalizedJobsRef = useRef<Set<string>>(new Set());
   const chatSurfaceRef = useRef<HTMLElement | null>(null);
   const messageEndRef = useRef<HTMLDivElement | null>(null);
@@ -455,9 +456,34 @@ export function CrewCommandCenter() {
       setJob(jobPayload.job);
       if (isTerminalJob(jobPayload.job.status)) {
         await finalizeJob(projectSlug, jobPayload.job, targetConversationId);
+        return;
+      }
+      if (!stepRunningRef.current) {
+        void advanceJobStep(projectSlug, jobId, targetConversationId);
       }
     } catch {
       return;
+    }
+  }
+
+  async function advanceJobStep(projectSlug: string, jobId: string, targetConversationId = conversationId) {
+    stepRunningRef.current = true;
+    try {
+      const payload = await postJson<{ job: StoredJob; events?: ProgressEvent[] }>(
+        `/jobs/${projectSlug}/${jobId}/run-step`,
+        {},
+      );
+      if (payload.events?.length) {
+        setProgress((current) => mergeProgressEvents(current, payload.events ?? []));
+      }
+      setJob(payload.job);
+      if (isTerminalJob(payload.job.status)) {
+        await finalizeJob(projectSlug, payload.job, targetConversationId);
+      }
+    } catch (caught) {
+      setError(errorMessage(caught));
+    } finally {
+      stepRunningRef.current = false;
     }
   }
 
@@ -465,6 +491,7 @@ export function CrewCommandCenter() {
     if (pollingKeyRef.current === `${projectSlug}:${finishedJob.job_id}`) {
       stopProgressPolling();
     }
+    stepRunningRef.current = false;
     setJob(finishedJob);
     await refreshArtifacts(projectSlug);
     if (finalizedJobsRef.current.has(finishedJob.job_id)) return;

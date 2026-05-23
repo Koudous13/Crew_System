@@ -31,6 +31,8 @@ Copier `.env.example` vers `.env`, puis renseigner la cle voulue. Pour Gemini :
 ```env
 GEMINI_API_KEY=...
 GEMINI_MODEL=gemma-4-26b-a4b-it
+GEMINI_STEP_TIMEOUT_SECONDS=28
+GEMINI_MAX_OUTPUT_TOKENS=2048
 GEMINI_RESPONSE_SCHEMA=false
 ```
 

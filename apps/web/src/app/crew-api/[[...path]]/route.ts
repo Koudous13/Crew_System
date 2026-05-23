@@ -101,6 +101,11 @@ type GeminiJobOutput = {
   artifacts?: GeminiArtifact[];
 };
 
+type GeminiCallOptions = {
+  timeoutSeconds?: number;
+  maxOutputTokens?: number;
+};
+
 class ApiError extends Error {
   statusCode: number;
   code: string;
@@ -343,7 +348,7 @@ async function handlePost(supabase: SupabaseClient, request: NextRequest, parts:
       });
     }
 
-    const jobPayload = await startAndRunJob(supabase, targetProject, message);
+    const jobPayload = await startQueuedJob(supabase, targetProject, message);
     const assistantMessage = await insertMessage(supabase, {
       conversation_id: conversation.conversation_id,
       project_slug: targetProject,
@@ -380,8 +385,13 @@ async function handlePost(supabase: SupabaseClient, request: NextRequest, parts:
   if (parts.length === 1 && parts[0] === "jobs") {
     const projectSlug = requiredBody(body, "project_slug");
     const message = requiredBody(body, "message");
-    const jobPayload = await startAndRunJob(supabase, projectSlug, message);
+    const jobPayload = await startQueuedJob(supabase, projectSlug, message);
     return jsonResponse(jobPayload, 200);
+  }
+
+  if (parts.length === 4 && parts[0] === "jobs" && parts[3] === "run-step") {
+    const payload = await runJobStep(supabase, parts[1], parts[2]);
+    return jsonResponse(payload, 200);
   }
 
   if (parts.length === 4 && parts[0] === "jobs" && parts[3] === "cancel") {
@@ -430,7 +440,7 @@ async function handlePost(supabase: SupabaseClient, request: NextRequest, parts:
     );
     const instructions = requiredBody(body, "instructions");
     const message = `Révise le livrable ${artifact.path}. Instructions de révision: ${instructions}`;
-    const jobPayload = await startAndRunJob(supabase, projectSlug, message);
+    const jobPayload = await startQueuedJob(supabase, projectSlug, message);
     return jsonResponse(jobPayload, 200);
   }
 
@@ -455,7 +465,7 @@ function supabaseClient() {
   });
 }
 
-async function startAndRunJob(supabase: SupabaseClient, projectSlug: string, message: string) {
+async function startQueuedJob(supabase: SupabaseClient, projectSlug: string, message: string) {
   await requireProject(supabase, projectSlug);
   requireGeminiConfig();
   const now = new Date().toISOString();
@@ -484,13 +494,68 @@ async function startAndRunJob(supabase: SupabaseClient, projectSlug: string, mes
   await appendEvent(supabase, job.job_id, projectSlug, "queued", "Demande reçue. Préparation du travail agentique.", 1, [
     "directeur_strategique",
   ]);
+  return { job: jobToApi(job), provider: "gemini", run_async: true };
+}
+
+async function runJobStep(supabase: SupabaseClient, projectSlug: string, jobId: string) {
+  const job = await requireJob(supabase, projectSlug, jobId);
+  if (terminalStatus(job.status)) {
+    return { job: jobToApi(job), events: (await jobEvents(supabase, projectSlug, jobId)).map(eventToApi) };
+  }
 
   try {
-    const completed = await runGeminiJob(supabase, job, message);
-    return { job: jobToApi(completed), provider: "gemini", run_async: false };
+    if (job.current_phase === "queued") {
+      const updated = await advanceJobPhase(
+        supabase,
+        job,
+        "running",
+        "intake",
+        8,
+        "Directeur stratégique : cadrage de la demande.",
+        ["directeur_strategique"],
+      );
+      return { job: jobToApi(updated), events: (await jobEvents(supabase, projectSlug, jobId)).map(eventToApi) };
+    }
+
+    if (job.current_phase === "intake") {
+      const updated = await advanceJobPhase(
+        supabase,
+        job,
+        "running",
+        "analysis",
+        24,
+        "Agents stratégie, psychologie et growth : analyse croisée.",
+        ["strategist", "psychology_agent", "growth_hacker"],
+      );
+      return { job: jobToApi(updated), events: (await jobEvents(supabase, projectSlug, jobId)).map(eventToApi) };
+    }
+
+    if (job.current_phase === "analysis") {
+      const updated = await advanceJobPhase(
+        supabase,
+        job,
+        "running",
+        "generation",
+        42,
+        "Agents contenu, plateformes et qualité : préparation du livrable.",
+        ["content_architect", "facebook_native_agent", "linkedin_native_agent", "quality_guardian"],
+      );
+      return { job: jobToApi(updated), events: (await jobEvents(supabase, projectSlug, jobId)).map(eventToApi) };
+    }
+
+    const completed = await runGeminiJob(supabase, job, job.request_message);
+    return { job: jobToApi(completed), events: (await jobEvents(supabase, projectSlug, jobId)).map(eventToApi) };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "Unknown Gemini error";
-    await appendEvent(supabase, job.job_id, projectSlug, "failed", "Le job a échoué pendant l'exécution IA.", 100, []);
+    await appendEvent(
+      supabase,
+      job.job_id,
+      projectSlug,
+      "failed",
+      "Le job a échoué pendant l'exécution IA, sans bloquer l'interface.",
+      100,
+      [],
+    );
     const { data, error: updateError } = await supabase
       .from("crew_jobs")
       .update({
@@ -504,27 +569,43 @@ async function startAndRunJob(supabase: SupabaseClient, projectSlug: string, mes
       .select("*")
       .single();
     throwIfSupabaseError(updateError);
-    return { job: jobToApi(data as JobRow), provider: "gemini", run_async: false };
+    return { job: jobToApi(data as JobRow), events: (await jobEvents(supabase, projectSlug, jobId)).map(eventToApi) };
   }
 }
 
+async function advanceJobPhase(
+  supabase: SupabaseClient,
+  job: JobRow,
+  status: string,
+  phase: string,
+  percent: number,
+  message: string,
+  activeAgents: string[],
+) {
+  await appendEvent(supabase, job.job_id, job.project_slug, status, message, percent, activeAgents);
+  const { data, error } = await supabase
+    .from("crew_jobs")
+    .update({
+      status,
+      current_phase: phase,
+      percent_estimate: percent,
+      agents_used: mergeUnique(job.agents_used, activeAgents),
+      updated_at: new Date().toISOString(),
+    })
+    .eq("job_id", job.job_id)
+    .select("*")
+    .single();
+  throwIfSupabaseError(error);
+  return data as JobRow;
+}
+
 async function runGeminiJob(supabase: SupabaseClient, job: JobRow, message: string) {
-  await appendEvent(supabase, job.job_id, job.project_slug, "running", "Directeur stratégique : cadrage de la demande.", 8, [
-    "directeur_strategique",
-  ]);
   const project = await requireProject(supabase, job.project_slug);
   const recentMessages = await recentProjectMessages(supabase, job.project_slug);
   const projectArtifacts = await recentArtifacts(supabase, job.project_slug);
-  await appendEvent(supabase, job.job_id, job.project_slug, "running", "Agents stratégie, psychologie et growth : analyse croisée.", 24, [
-    "strategist",
-    "psychology_agent",
-    "growth_hacker",
-  ]);
-  await appendEvent(supabase, job.job_id, job.project_slug, "running", "Agents contenu, plateformes et qualité : construction du livrable.", 48, [
+  await appendEvent(supabase, job.job_id, job.project_slug, "running", "Gemini/Gemma : rédaction contrôlée du document.", 64, [
     "content_architect",
-    "facebook_native_agent",
-    "linkedin_native_agent",
-    "quality_guardian",
+    "file_architect",
   ]);
   const output = await callGeminiForJob({
     project,
@@ -594,10 +675,10 @@ async function callGeminiForJob(input: {
 }) {
   const prompt = [
     "Tu es Crew_System Cloud, un OS agentique de stratégie de communication.",
-    "Tu dois produire un travail réel, exploitable, en français, sous forme de documents Markdown lisibles.",
+    "Tu dois produire un travail réel, exploitable, en français, sous forme de documents Markdown lisibles mais compacts.",
     "Tu travailles comme un collectif d'agents internes : directeur stratégique, psychologue émotionnel, growth hacker, hook doctor, content architect, agents Facebook/LinkedIn, visual strategist, quality guardian et file architect.",
     "Tu peux utiliser des mécaniques d'attention, de persuasion, de viralité et de growth, mais sans arnaque, sans mensonge et sans coercition.",
-    "Ne réponds pas avec du bla-bla. Crée des livrables utiles.",
+    "Ne réponds pas avec du bla-bla. Crée un livrable utile, dense, actionnable.",
     "",
     "Projet :",
     JSON.stringify(input.project),
@@ -607,22 +688,23 @@ async function callGeminiForJob(input: {
     "",
     "Messages récents :",
     JSON.stringify(
-      input.recentMessages.map((message) => ({
+      input.recentMessages.slice(-8).map((message) => ({
         role: message.role,
-        content: message.content,
+        content: message.content.slice(0, 900),
       })),
     ),
     "",
     "Documents récents déjà disponibles :",
     JSON.stringify(
-      input.projectArtifacts.slice(0, 5).map((artifact) => ({
+      input.projectArtifacts.slice(0, 2).map((artifact) => ({
         path: artifact.path,
         status: artifact.status,
-        preview: artifact.content.slice(0, 1200),
+        preview: artifact.content.slice(0, 600),
       })),
     ),
     "",
     "Réponds uniquement avec un objet JSON valide, sans Markdown autour.",
+    "Limite-toi à 1 ou 2 documents Markdown. Chaque document doit être lisible et directement utilisable.",
     "Format obligatoire :",
     JSON.stringify({
       assistant_message: "message court pour le chat",
@@ -640,7 +722,10 @@ async function callGeminiForJob(input: {
       ],
     }),
   ].join("\n");
-  return callGeminiJson(prompt);
+  return callGeminiJson(prompt, {
+    timeoutSeconds: numberEnv("GEMINI_STEP_TIMEOUT_SECONDS", process.env.VERCEL ? 28 : 120),
+    maxOutputTokens: numberEnv("GEMINI_MAX_OUTPUT_TOKENS", 2048),
+  });
 }
 
 async function answerConversationally(
@@ -672,44 +757,63 @@ async function answerConversationally(
     message,
     "Réponse courte en français :",
   ].join("\n");
-  const raw = await callGeminiText(prompt);
-  return raw.trim() || "Je suis là. Dis-moi ce que tu veux construire maintenant.";
+  try {
+    const raw = await callGeminiText(prompt, {
+      timeoutSeconds: numberEnv("GEMINI_CHAT_TIMEOUT_SECONDS", process.env.VERCEL ? 15 : 60),
+      maxOutputTokens: 512,
+    });
+    return raw.trim() || "Je suis là. Dis-moi ce que tu veux construire maintenant.";
+  } catch {
+    return "Je suis là. Le moteur met trop de temps à répondre pour cette question, mais tu peux lancer une demande de travail et je la traiterai par étapes.";
+  }
 }
 
-async function callGeminiJson(prompt: string): Promise<GeminiJobOutput> {
-  const text = await callGeminiText(prompt);
+async function callGeminiJson(prompt: string, options: GeminiCallOptions = {}): Promise<GeminiJobOutput> {
+  const text = await callGeminiText(prompt, options);
   const parsed = parseJsonObject(text);
   return parsed as GeminiJobOutput;
 }
 
-async function callGeminiText(prompt: string) {
+async function callGeminiText(prompt: string, options: GeminiCallOptions = {}) {
   requireGeminiConfig();
   const apiKey = process.env.GEMINI_API_KEY ?? "";
   const model = process.env.GEMINI_MODEL || "gemma-4-26b-a4b-it";
   const temperature = numberEnv("GEMINI_TEMPERATURE", 0.3);
-  const timeoutMs = numberEnv("GEMINI_TIMEOUT_SECONDS", 240) * 1000;
+  const timeoutMs =
+    (options.timeoutSeconds ?? numberEnv("GEMINI_TIMEOUT_SECONDS", process.env.VERCEL ? 28 : 240)) * 1000;
+  const maxOutputTokens = options.maxOutputTokens ?? optionalNumberEnv("GEMINI_MAX_OUTPUT_TOKENS");
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [
-            {
-              role: "user",
-              parts: [{ text: prompt }],
-            },
-          ],
-          generationConfig: {
-            temperature,
-          },
-        }),
-        signal: controller.signal,
-      },
-    );
+    let response: Response;
+    try {
+      response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [
+              {
+                role: "user",
+                parts: [{ text: prompt }],
+              },
+            ],
+            generationConfig: compactGenerationConfig(temperature, maxOutputTokens),
+          }),
+          signal: controller.signal,
+        },
+      );
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") {
+        throw new ApiError(
+          504,
+          `Gemini exceeded the ${Math.round(timeoutMs / 1000)}s cloud step budget.`,
+          "gemini_step_timeout",
+        );
+      }
+      throw error;
+    }
     const payload = (await response.json()) as JsonRecord;
     if (!response.ok) {
       throw new ApiError(502, `Gemini API error ${response.status}: ${JSON.stringify(payload).slice(0, 500)}`, "gemini_error");
@@ -1154,6 +1258,26 @@ function numberEnv(key: string, fallback: number) {
   }
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function optionalNumberEnv(key: string) {
+  const value = process.env[key];
+  if (!value) {
+    return undefined;
+  }
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : undefined;
+}
+
+function compactGenerationConfig(temperature: number, maxOutputTokens: number | undefined) {
+  return {
+    temperature,
+    ...(maxOutputTokens ? { maxOutputTokens } : {}),
+  };
+}
+
+function mergeUnique(left: string[], right: string[]) {
+  return Array.from(new Set([...(left ?? []), ...right]));
 }
 
 function terminalStatus(status: string) {
