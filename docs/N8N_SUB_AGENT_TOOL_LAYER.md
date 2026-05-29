@@ -31,11 +31,49 @@ Contrat technique commun :
 ```text
 When called by Directeur
   -> Prepare Agent Input
+  -> Workspace documentaire autorise
   -> Basic LLM Chain / Gemini
   -> Validate Agent Response
 ```
 
 Chaque workflow contient aussi un `Structured Output Parser` visible sur le canvas, non bloquant, avec exemple de schema. La validation fiable reste faite par `Validate Agent Response`.
+
+## 0.4 Lecture Documentaire Par Agent
+
+Chaque agent ne doit plus travailler seulement avec un résumé court du projet.
+
+Le worker construit maintenant, pour chaque agent, un `document_workspace` limité à ses permissions :
+
+```text
+Agent
+  -> fichiers autorisés par AGENT_DOCUMENT_POLICIES
+  -> contenus réellement sauvegardés dans crew_artifacts
+  -> documents indexés dans crew_documents
+  -> fichiers requis manquants signalés sans invention
+```
+
+Le principe :
+
+```text
+Pas de lecture globale.
+Pas de mélange entre projets.
+Pas de fichier hors domaine.
+Pas de stratégie inventée si le fichier requis manque.
+```
+
+Exemple :
+
+```text
+copywriter
+  lit strategy/
+  lit calendar/annual_editorial_calendar.md
+  lit platforms/facebook_strategy.md
+  lit platforms/linkedin_strategy.md
+  lit creative/visual_direction.md
+  écrit outputs/batches/{job_id}_content_batch.md
+```
+
+Cette couche n'est pas encore un vrai tool interactif `read_project_file(path)` appelé librement par l'agent pendant son raisonnement. C'est une étape de durcissement intermédiaire : le système charge les vrais contenus autorisés avant l'appel agent, au lieu d'envoyer seulement des extraits globaux.
 
 ## 0.2 Roles De La Deuxieme Vague
 
@@ -110,6 +148,38 @@ Le worker route les jobs selon leur type :
 La reprise ciblée utilise les mêmes familles d'agents et saute les checkpoints déjà completed.
 ```
 
+Pour une production de contenus, le trio `hook_master + copywriter + creative_director` n'est jamais suffisant seul.
+
+Le chemin normal est :
+
+```text
+strategist
+  -> audience_psychologist
+  -> growth_hacker
+  -> hook_master
+  -> facebook_native_agent / linkedin_native_agent
+  -> copywriter
+  -> creative_director
+```
+
+Raison :
+
+- `audience_psychologist` garde la tension humaine, les douleurs, les objections et les mots exacts ;
+- `growth_hacker` garde la logique d'amplification, commentaires, DM, conversion et tests ;
+- `hook_master` transforme cette matière en accroches puissantes ;
+- `copywriter` rédige les posts finaux ;
+- `creative_director` décide du rôle du visuel ou de la vidéo.
+
+Directive Hook Master :
+
+```text
+La majorité des hooks doivent être impossibles et curieux :
+courts, presque paradoxaux, très mémorables, mais défendables par le contenu.
+
+Exemple d'esprit :
+"Une IA qui FAIT TOUT"
+```
+
 Le Directeur garde les mêmes tools :
 
 ```text
@@ -152,7 +222,7 @@ Raison :
 - garder le canvas principal lisible ;
 - éviter de multiplier les workflows visibles trop tôt ;
 - donner au Directeur de vrais agents appelables ;
-- conserver une sortie structurée exploitable sans exposer le JSON à Koudous.
+- conserver une sortie structurée exploitable sans exposer le JSON à l'utilisateur.
 
 ## 2. Statut
 
@@ -162,7 +232,7 @@ Sous-agents branchés : 5
 Connexion ai_tool vers le Directeur : oui
 Chaque tool appelle un sub-workflow visible : oui
 Modèle utilisé : Gemini/Gemma configuré dans n8n
-Réponse directe à Koudous : non, handoff au Directeur uniquement
+Réponse directe à l'utilisateur : non, handoff au Directeur uniquement
 Test 1 agent : succès
 Test 5 agents synchrones : succès
 Validation format agent : oui, via Validate Agent Response
@@ -263,34 +333,46 @@ language
 
 Le Directeur doit préparer le contexte avant d'appeler un sous-agent.
 
-### Contexte Obligatoire Pour `le_robot`
+Dans les jobs asynchrones, ce contexte n'est plus seulement fourni par la conversation. Le worker exécute maintenant `Build Project Context Package` avant le premier agent et injecte :
 
-Pour tout travail concernant Koudous, Le Robot, Facebook, LinkedIn, n8n, Python, automatisation, PME ou solopreneurs, le Directeur doit injecter un contexte stable avant chaque appel de sous-agent.
+- la fiche projet ;
+- les documents Drive indexés ;
+- les derniers artifacts Markdown ;
+- les décisions récentes ;
+- la mémoire récente des agents ;
+- les jobs récents du projet.
+
+Strategist reçoit ce paquet dans `previous_agent_outputs.project_context`. Tous les autres agents reçoivent aussi le contexte enrichi dans `context_summary`, puis les sorties des agents précédents.
+
+### Contexte Projet Obligatoire
+
+Pour tout travail durable, le Directeur doit d'abord résoudre le projet actif puis injecter le contexte réel du projet avant chaque appel de sous-agent.
 
 Contexte minimal à transmettre :
 
 ```text
-project_slug: le_robot
-Porteur : Koudous DAOUDA
-Marque / surnom : Le Robot
-Expertise : automatisation n8n, automatisation Python, systèmes IA, applications web
-Cibles : PME, solopreneurs, entrepreneurs
-Plateformes : Facebook et LinkedIn
-Angle : automatiser l'ennuyeux, réduire le chaos opérationnel, libérer le business des tâches répétitives
-Ton : direct, premium, minimaliste, concret
+project_slug: slug_du_projet
+Nom du projet : nom lisible
+Porteur / marque : uniquement si connu dans la base projet
+Expertise / offre : uniquement depuis le contexte projet
+Cibles : uniquement depuis le contexte projet
+Plateformes : uniquement depuis le contexte projet
+Angle stratégique : uniquement depuis le contexte projet
+Ton : uniquement depuis le contexte projet
+Documents Drive utiles : liste courte des fichiers lus
 ```
 
 Règle anti-amnésie :
 
-- un sous-agent ne doit plus redemander ce qu'est Le Robot ;
-- il ne doit plus demander si la cible est PME/solopreneurs ;
-- il ne doit plus demander si l'expertise est l'automatisation ;
+- un sous-agent ne doit pas redemander ce que la base projet contient déjà ;
+- il ne doit pas inventer une cible, une expertise ou une marque ;
+- il doit signaler clairement les trous de contexte ;
 - il peut seulement demander les détails encore inconnus : prix, offre packagée exacte, capacité de traitement, lead magnet, CTA final, niche sectorielle ou volume.
 
 Test validé :
 
 ```text
-Chantier complet Le Robot
+Chantier complet du projet actif
 Agents appelés : 5/5
 Formats valides : 5/5
 Statuts : success sur les 5 agents après injection du contexte obligatoire
@@ -317,7 +399,7 @@ Il peut ensuite ajouter ses sections métier :
 - `project_file_plan`
 - etc.
 
-Le Directeur ne doit pas montrer ces sorties brutes à Koudous.
+Le Directeur ne doit pas montrer ces sorties brutes à l'utilisateur.
 Il doit les synthétiser en français lisible.
 
 ## 7. Règles Du Directeur
@@ -406,7 +488,7 @@ Le noeud `Validate Agent Response` fait le vrai contrôle opérationnel :
 - il accepte un statut `needs_context` sans transformer cela en erreur système ;
 - il retourne `ok`, `format_valid`, `missing_required_fields`, `invalid_reasons`, `parse_strategy`, `output`.
 
-Le Directeur ne doit jamais montrer ces champs techniques à Koudous.
+Le Directeur ne doit jamais montrer ces champs techniques à l'utilisateur.
 Il doit transformer le handoff en réponse humaine ou en question métier.
 
 ## 12. Tests Validés
@@ -416,7 +498,7 @@ Il doit transformer le handoff en réponse humaine ou en question métier.
 Demande :
 
 ```text
-Appeler uniquement cs_agent_strategist pour analyser le positionnement de Koudous DAOUDA / Le Robot.
+Appeler uniquement cs_agent_strategist pour analyser le positionnement du projet actif.
 ```
 
 Résultat :
@@ -447,7 +529,7 @@ Le Directeur a synthétisé les sorties.
 Point corrigé après test :
 
 ```text
-Le prompt Directeur a été durci pour respecter strictement les formats demandés par Koudous :
+Le prompt Directeur a été durci pour respecter strictement les formats demandés par l'utilisateur :
 nombre exact d'éléments, sections, hooks, prochaine action, longueur, etc.
 ```
 

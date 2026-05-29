@@ -22,28 +22,23 @@ async function n8nFetch(baseUrl, apiKey, path) {
 }
 
 async function main() {
-  const executionId = process.argv[2];
-  if (!executionId) throw new Error("Usage: node tools/n8n_inspect_execution.js <execution_id>");
+  const [executionId, nodeName, outputIndexRaw = "0"] = process.argv.slice(2);
+  if (!executionId || !nodeName) {
+    throw new Error("Usage: node tools/n8n_dump_execution_node_items.js <execution_id> <node_name> [output_index]");
+  }
   const env = loadEnv("workspace/private/n8n_reference/.env");
   const baseUrl = env.N8N_BASE_URL || env.N8N_URL || env.N8N_HOST;
   const apiKey = env.N8N_API_KEY;
+  if (!baseUrl || !apiKey) throw new Error("Missing n8n URL or API key.");
+
   const execution = await n8nFetch(baseUrl, apiKey, `/api/v1/executions/${executionId}?includeData=true`);
-  console.log(`execution=${execution.id} status=${execution.status} finished=${execution.finished}`);
   const resultData = execution.data?.resultData || execution.data?.executionData?.resultData || {};
-  if (resultData.error) {
-    console.log("--- error");
-    console.log(JSON.stringify(resultData.error, null, 2));
-  }
-  const runData = resultData.runData || {};
-  for (const [nodeName, runs] of Object.entries(runData)) {
-    const last = runs[runs.length - 1] || {};
-    const outputs = last.data?.main || [];
-    const itemCounts = outputs.map((output) => (output || []).length);
-    console.log(`--- node=${nodeName} status=${last.executionStatus || ""} items=${itemCounts.join(",") || "0"}`);
-    if (last.error) console.log(JSON.stringify(last.error, null, 2));
-    const data = last.data?.main?.[0]?.[0]?.json;
-    if (data) console.log(JSON.stringify(data, null, 2).slice(0, 6000));
-  }
+  const runs = resultData.runData?.[nodeName];
+  if (!runs?.length) throw new Error(`Node not found in execution: ${nodeName}`);
+  const last = runs[runs.length - 1] || {};
+  const outputIndex = Number(outputIndexRaw);
+  const items = last.data?.main?.[outputIndex] || [];
+  console.log(JSON.stringify(items.map((item) => item.json || {}), null, 2));
 }
 
 main().catch((error) => {

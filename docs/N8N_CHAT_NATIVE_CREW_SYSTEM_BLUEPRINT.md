@@ -120,7 +120,7 @@ Test ecriture job + progress event : succes.
 Anciens sous-workflows Supabase de test : supprimés.
 Firewall de réponse publique : installé et testé.
 Tools Google Drive : installés dans le workflow Directeur comme nodes `Google Drive Tool`.
-Credential Google Drive : configuré par Koudous et vérifié.
+Credential Google Drive : configuré et vérifié.
 Test lecture Drive : succès.
 Test création dossier + document Markdown : succès.
 Test final de vérification Drive/chat : succès.
@@ -213,7 +213,8 @@ Règle :
 - la reprise ciblée lit `crew_agent_runs`, saute les agents déjà terminés et refait seulement ce qui manque ;
 - Supabase garde le statut, la progression, les checkpoints agents, les artifacts, les erreurs et l'index des documents ;
 - chaque sous-agent écrit son résultat dans `crew_agent_runs` avant que le worker passe à l'agent suivant ;
-- les phases visibles passent par `1%`, `10%`, `20%`, `38%`, `55%`, `72%`, `86%`, puis `100%` ;
+- le worker charge automatiquement le contexte projet avant le premier agent : projet, documents, artifacts, décisions, agent runs et jobs récents ;
+- les phases visibles passent par `1%`, `10%`, `14%`, `20%`, `38%`, `55%`, `62%`, puis jusqu'à `100%` selon la route ;
 - le document final du worker ne passe pas par le firewall chat, mais par `Worker Markdown Sanitizer` ;
 - le livrable final est sauvegardé dans `crew_artifacts`, créé dans Google Drive, puis indexé dans `crew_documents` ;
 - si la synthèse finale ne produit pas un Markdown exploitable, le job est marqué `failed` avec un diagnostic Markdown ;
@@ -306,7 +307,7 @@ Statut :
 
 ```text
 7 tools `Google Drive Tool` sont branchés au Directeur.
-Le credential Drive `Google Drive Crew System` a été sélectionné par Koudous.
+Le credential Drive `Google Drive Crew System` a été sélectionné et vérifié.
 Les tests lecture, création et vérification sont passés.
 ```
 
@@ -479,8 +480,8 @@ Schema `DriveDocumentResult` :
 Depuis le chat n8n :
 
 ```text
-Salut. Je suis Koudous DAOUDA, Le Robot.
-Je veux construire ma strategie de domination Facebook et LinkedIn.
+Salut. Je veux créer un projet nommé `ecole_229`.
+Je veux construire sa strategie de domination Facebook et LinkedIn.
 Commence par me poser les bonnes questions pour creer ma base strategique.
 ```
 
@@ -503,8 +504,8 @@ Questions attendues :
 ## 11. Deuxieme Scenario De Test
 
 ```text
-Crée la base stratégique complète de mon profil Le Robot.
-Tu peux utiliser ce que je t'ai deja donné : automatisation n8n, Python, applications web, Facebook, LinkedIn.
+Crée la base stratégique complète du projet `ecole_229`.
+Tu peux utiliser ce que je t'ai deja donné dans la conversation et les documents du projet.
 ```
 
 Le Directeur doit :
@@ -559,7 +560,7 @@ Statut : fait dans le workflow Directeur, avec tools intégrés et anciens workf
 
 ### Etape 5 - Premier Job Reel
 
-- creer ou completer le projet `koudous_daouda_le_robot` ;
+- creer ou completer le projet actif ;
 - produire une base strategique Drive ;
 - tester une demande de calendrier ;
 - tester une demande de batch.

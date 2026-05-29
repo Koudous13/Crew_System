@@ -22,7 +22,7 @@ Le node `Google Drive Tool` expose Google Drive comme capacité utilisable par u
 
 Raison :
 
-- Koudous peut vérifier lui-même le bon credential Google Drive avant tout test ;
+- le propriétaire du workspace peut vérifier le bon credential Google Drive avant tout test ;
 - les opérations Drive restent lisibles dans l'interface n8n ;
 - le Directeur peut utiliser Drive comme espace documentaire une fois le credential validé.
 
@@ -39,7 +39,7 @@ Test création dossier + document Markdown : succès
 Test vérification après création : succès
 ```
 
-Le credential Google Drive a été sélectionné par Koudous puis vérifié par test contrôlé.
+Le credential Google Drive a été sélectionné puis vérifié par test contrôlé.
 
 ## 3. Tools Ajoutés
 
@@ -63,7 +63,7 @@ Usage attendu :
 
 - retrouver l'espace documentaire d'un projet ;
 - éviter de recréer un dossier déjà existant ;
-- confirmer ou demander à Koudous si plusieurs dossiers correspondent.
+- confirmer ou demander à l'utilisateur si plusieurs dossiers correspondent.
 
 ### cs_drive_create_project_folder
 
@@ -72,7 +72,7 @@ Crée un dossier projet.
 Usage attendu :
 
 - uniquement si le dossier n'existe pas ;
-- uniquement si Koudous veut créer ou structurer un projet ;
+- uniquement si l'utilisateur veut créer ou structurer un projet ;
 - jamais avant une recherche Drive.
 
 ### cs_drive_search_documents
@@ -108,7 +108,7 @@ Usage attendu :
 - plan de contenu ;
 - analyse ;
 - compte rendu de décisions ;
-- livrable final lisible par Koudous.
+- livrable final lisible par l'utilisateur.
 
 Règle : pas de JSON brut comme livrable utilisateur.
 
@@ -139,7 +139,7 @@ Ce tool ne doit pas être utilisé pour supprimer ou remplacer du contenu.
 
 Le prompt du Directeur a été mis à jour avec ces règles :
 
-- ne pas appeler Google Drive tant que Koudous n'a pas confirmé que le credential Drive est valide ;
+- ne pas appeler Google Drive tant que le credential Drive n'a pas été vérifié ;
 - chercher le dossier projet avant toute création ;
 - chercher les documents existants avant de produire ;
 - créer des documents Markdown lisibles ;
@@ -155,7 +155,7 @@ Supabase
   = état opérationnel, jobs, progress, décisions, erreurs, index documentaire.
 
 Google Drive
-  = documents lisibles, stratégiques, consultables par Koudous.
+  = documents lisibles, stratégiques, consultables par l'utilisateur.
 
 n8n Memory
   = confort conversationnel de la session courante.
@@ -166,7 +166,7 @@ Supabase ne remplace pas les documents lisibles.
 
 ## 7. Avant Premier Test
 
-Koudous doit ouvrir le workflow `CS_CHAT_DIRECTOR_NATIVE`, puis vérifier les nodes :
+Le propriétaire du workspace doit ouvrir le workflow `CS_CHAT_DIRECTOR_NATIVE`, puis vérifier les nodes :
 
 ```text
 cs_drive_search_project_folders

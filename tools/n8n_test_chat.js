@@ -15,13 +15,16 @@ function loadEnv(path) {
 }
 
 async function main() {
+  const args = process.argv.slice(2);
+  const sessionArgIndex = args.findIndex((arg) => arg.startsWith("--session="));
+  const explicitSession = sessionArgIndex >= 0 ? args.splice(sessionArgIndex, 1)[0].slice("--session=".length) : "";
   const message =
-    process.argv.slice(2).join(" ") ||
-    "Lance en arrière-plan un chantier complet Le Robot : stratégie Facebook et LinkedIn, psychologie audience, growth, hooks et livrable final Markdown. Ne fais pas tout dans le chat.";
+    args.join(" ") ||
+    "Lance en arrière-plan un chantier complet pour le projet test_systeme : stratégie Facebook et LinkedIn, psychologie audience, growth, hooks et livrable final Markdown. Ne fais pas tout dans le chat.";
   const env = loadEnv("workspace/private/n8n_reference/.env");
   const baseUrl = (env.N8N_BASE_URL || env.N8N_URL || env.N8N_HOST || "").replace(/\/$/, "");
   if (!baseUrl) throw new Error("Missing n8n URL.");
-  const sessionId = `codex_async_${Date.now()}`;
+  const sessionId = explicitSession || `codex_async_${Date.now()}`;
   const startedAt = Date.now();
   const response = await fetch(`${baseUrl}${CHAT_WEBHOOK_PATH}`, {
     method: "POST",

@@ -4,7 +4,7 @@
 
 Le chat ne doit pas porter les gros travaux.
 
-Quand Koudous demande une stratégie complète, un calendrier, un batch de contenus, un livrable Markdown ou un travail multi-agents, Crew_System doit répondre vite, créer un chantier traçable, puis laisser un worker n8n travailler en arrière-plan.
+Quand l'utilisateur demande une stratégie complète, un calendrier, un batch de contenus, un livrable Markdown ou un travail multi-agents, Crew_System doit répondre vite, créer un chantier traçable, puis laisser un worker n8n travailler en arrière-plan.
 
 ## 2. Workflows
 
@@ -118,7 +118,7 @@ Les demandes comme :
 
 ```text
 Où en est le job job_xxx ?
-Où en est le dernier chantier Le Robot ?
+Où en est le dernier chantier du projet `ecole_229` ?
 Le livrable est prêt ?
 ```
 
@@ -172,6 +172,14 @@ Il exécute une chaîne déterministe :
 Prepare Worker Input
   -> Mark Job Running
   -> Progress 10% preparing_agents
+  -> Progress 14% loading_context
+  -> Context Load crew_projects
+  -> Context Load crew_documents
+  -> Context Load crew_artifacts
+  -> Context Load crew_decisions
+  -> Context Load crew_agent_runs
+  -> Context Load crew_jobs
+  -> Build Project Context Package
   -> Progress 20% strategist
   -> Run CS_AGENT_STRATEGIST
   -> Checkpoint Strategist Agent Run
@@ -228,6 +236,35 @@ Prepare Worker Input
 
 Ce choix rend l'avancement visible et fiable : le système ne saute plus de `10%` à `100%`, il inscrit les phases principales dans `crew_progress_events`.
 
+### Project Context Loader
+
+Avant de lancer le premier sous-agent, le worker charge automatiquement le contexte projet.
+
+Sources lues :
+
+- `crew_projects` : fiche projet ;
+- `crew_documents` : documents Drive indexés ;
+- `crew_artifacts` : anciens livrables Markdown et contenus sauvegardés ;
+- `crew_decisions` : décisions récentes ;
+- `crew_agent_runs` : mémoire récente par agent ;
+- `crew_jobs` : derniers chantiers du projet.
+
+Le node `Build Project Context Package` produit :
+
+- `project_context_package` : contexte structuré machine ;
+- `context_summary` enrichi : contexte lisible transmis à chaque agent ;
+- `missing_context` : éléments absents mais non bloquants.
+
+Règles :
+
+- les agents ne reçoivent pas tout Supabase en vrac ;
+- seuls les éléments récents et utiles sont résumés ;
+- les anciens artifacts sont tronqués pour éviter de noyer le LLM ;
+- Strategist reçoit le `project_context_package` dès son premier appel ;
+- les autres agents reçoivent le même contexte enrichi via `context_summary` plus les sorties des agents précédents.
+
+Objectif : éviter les générations hors contexte, réutiliser les décisions passées et donner aux agents une mémoire projet sans exposer de JSON à l'utilisateur.
+
 Le worker route les agents selon `job_route` :
 
 - `strategy_brief` : strategist, audience, growth, hook si utile ;
@@ -235,7 +272,7 @@ Le worker route les agents selon `job_route` :
 - `content_batch` : strategist, audience, growth, hook, plateformes natives, copywriter, creative director ;
 - `creative_batch` : strategist, audience, growth, hook, creative director.
 
-Les pourcentages doivent toujours monter. Les valeurs de production sont maintenant ordonnées : `1 -> 10 -> 20 -> 38 -> 55 -> 62 -> 68 -> 74 -> 80 -> 86 -> 90 -> 94 -> 100`.
+Les pourcentages doivent toujours monter. Les valeurs de production sont maintenant ordonnées : `1 -> 10 -> 14 -> 20 -> 38 -> 55 -> 62 -> 68 -> 74 -> 80 -> 86 -> 90 -> 94 -> 100`.
 
 Si la synthèse finale ne produit pas un Markdown exploitable commençant par `#`, le job passe en `failed` et un diagnostic Markdown est sauvegardé.
 
@@ -521,6 +558,34 @@ Correction appliquée pendant le test :
 - une première passe avait relancé `calendar_architect` par erreur, car la route se laissait influencer par le texte du livrable final ;
 - la reprise ignore maintenant le texte final pour router ;
 - si des checkpoints de batch existent déjà (`copywriter`, `facebook_native_agent`, `linkedin_native_agent`), ils priment sur une mention ou un checkpoint accidentel de calendrier.
+
+### Project Context Loader
+
+Job :
+
+```text
+job_mpnvh0ax_021503f9
+```
+
+Demande :
+
+```text
+Lance en arrière-plan un mini test du Project Context Loader pour le projet `ecole_229` : produis une note stratégique courte en Markdown, pas plus d'une page, en utilisant le contexte projet disponible.
+```
+
+Résultat :
+
+- réponse chat rapide : environ 1,3 seconde ;
+- événement `loading_context` visible à 14% ;
+- nodes exécutés : `Context Load crew_projects`, `Context Load crew_documents`, `Context Load crew_artifacts`, `Context Load crew_decisions`, `Context Load crew_agent_runs`, `Context Load crew_jobs`, `Build Project Context Package` ;
+- Strategist a reçu le `project_context_package` ;
+- les agents ont réutilisé le contexte des anciens livrables et agent runs ;
+- job terminé à 100% ;
+- document Drive créé :
+
+```text
+https://drive.google.com/file/d/1bKTYsknE5BxPfUrOgksz101CeAr-nDNu/view
+```
 
 ## 13. Risques restants
 

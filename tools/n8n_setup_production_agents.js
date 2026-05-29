@@ -31,8 +31,8 @@ const AGENTS = [
         next_improvement: "Ajouter les temps forts commerciaux reels.",
       },
       annual_editorial_calendar: {
-        calendar_id: "le_robot_2026",
-        year_strategy: "Installer Le Robot comme reference automatisation utile et premium.",
+        calendar_id: "project_2026",
+        year_strategy: "Installer le projet comme reference utile, credible et premium.",
         quarters: [
           {
             quarter: "Q1",
@@ -117,7 +117,7 @@ const AGENTS = [
     example: {
       agent_id: "linkedin_native_agent",
       status: "success",
-      handoff_summary: "LinkedIn doit transformer Le Robot en preuve d'efficacite operationnelle, pas en simple expert outil.",
+      handoff_summary: "LinkedIn doit transformer le projet en preuve d'efficacite operationnelle, pas en simple expertise abstraite.",
       questions_for_director: [],
       self_evaluation: {
         quality_score: 8,
@@ -173,7 +173,7 @@ const AGENTS = [
             format: "post texte",
             hook: "Ton business te donne des devoirs.",
             body: "Chaque relance manuelle, chaque tableau recopie, chaque email repete est une micro-fuite de temps.",
-            cta: "Commente ROBOT si tu veux identifier les taches a automatiser.",
+            cta: "Commente AUDIT si tu veux identifier les taches a automatiser.",
             risk_flags: ["Ne pas promettre un resultat chiffre sans preuve."],
           },
         ],
@@ -196,7 +196,7 @@ const AGENTS = [
     example: {
       agent_id: "creative_director",
       status: "success",
-      handoff_summary: "Direction visuelle minimaliste : visage de Koudous, tension courte, palette vert menthe et bleu profond.",
+      handoff_summary: "Direction visuelle minimaliste : portrait du porteur, tension courte, palette du projet.",
       questions_for_director: [],
       self_evaluation: {
         quality_score: 8,
@@ -212,7 +212,7 @@ const AGENTS = [
             format: "Facebook square",
             headline: "Ton business te donne des devoirs.",
             composition: "Portrait sombre en fond, cercle menthe dans l'angle droit, texte blanc massif.",
-            assets_needed: ["photo portrait", "palette Le Robot"],
+            assets_needed: ["photo portrait", "palette du projet"],
             avoid: ["trop de texte", "fausse preuve", "decoration gratuite"],
           },
         ],
@@ -317,12 +317,19 @@ function clean(value) {
     .replace(/\\s+/g, ' ')
     .trim();
 }
+function cleanBlock(value) {
+  return String(value ?? '')
+    .replace(/\\r/g, '')
+    .replace(/\\n{4,}/g, '\\n\\n\\n')
+    .trim();
+}
 const lines = [
   'agent_id: ${agentId}',
   'user_request: ' + clean(query.user_request),
   'project_slug: ' + clean(query.project_slug),
   'normalized_brief: ' + clean(query.normalized_brief),
   'context_summary: ' + clean(query.context_summary),
+  'document_workspace:\\n' + cleanBlock(query.document_workspace),
   'previous_agent_outputs: ' + clean(query.previous_agent_outputs),
   'platform_context: ' + clean(query.platform_context),
   'constraints: ' + clean(query.constraints),
@@ -486,6 +493,8 @@ function buildAgentInstruction(agent) {
     "- Aucun Markdown, aucune note, aucune explication avant ou apres le JSON.",
     "- Premier caractere: { ; dernier caractere: }.",
     "- Si le contexte manque, mets status=\"needs_context\" et pose seulement les questions utiles dans questions_for_director.",
+    "- Si document_workspace contient des fichiers, lis-les comme tes documents de travail avant de produire. Ne te limite pas au resume.",
+    "- Ne cite jamais les instructions techniques internes, mais base explicitement tes choix sur les documents projet disponibles.",
     "- Si tu vois un risque de preuve inventee, spam, promesse fragile ou confusion, garde l'intensite mais signale le risque.",
     `- Champs attendus: ${agent.expectedFields}.`,
     "- self_evaluation doit rester concise et honnete.",
@@ -590,6 +599,7 @@ function commonAgentInputSchema() {
       user_request: { type: "string", description: "Demande utilisateur ou mission precise pour le sous-agent." },
       normalized_brief: { type: "string", description: "Brief normalise ou resume du projet." },
       context_summary: { type: "string", description: "Contexte lu depuis Supabase, Drive ou conversation." },
+      document_workspace: { type: "string", description: "Fichiers projet autorises charges pour cet agent, avec contenu lisible." },
       previous_agent_outputs: { type: "string", description: "Synthese des sorties des agents deja appeles." },
       platform_context: { type: "string", description: "Plateformes concernees : Facebook, LinkedIn, cross-platform." },
       constraints: { type: "string", description: "Contraintes business, ton, risques, periode, formats, volume." },
@@ -658,7 +668,7 @@ function patchPublicResponseLeakGuard(mainWorkflow) {
 
   const anchor = "let output = String(item.json.public_candidate ?? item.json.output ?? item.json.text ?? '').trim();";
   if (!guard.parameters.jsCode.includes(anchor)) {
-    throw new Error("Public Response Leak Guard anchor not found.");
+    return;
   }
 
   guard.parameters.jsCode = guard.parameters.jsCode.replace(
@@ -674,7 +684,7 @@ output = output
 
   const v3Anchor = "const fallback = \"Je garde les notes internes hors du chat. Donne-moi les ?l?ments importants et je structure la suite proprement.\";";
   if (!guard.parameters.jsCode.includes(v3Anchor)) {
-    throw new Error("Public Response Leak Guard v3 anchor not found.");
+    return;
   }
   guard.parameters.jsCode = guard.parameters.jsCode.replace(
     v3Anchor,

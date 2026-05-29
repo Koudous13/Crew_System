@@ -4,7 +4,7 @@ const crypto = require("crypto");
 const MAIN_WORKFLOW_ID = "U3eGOTVq0DenA2pm";
 const RESUME_WORKFLOW_NAME = "CS_RESUME_JOB_WORKER";
 const SUPABASE_CREDENTIAL = { id: "OMiEiywYcayYYI4W", name: "Supabase Crew System" };
-const GOOGLE_DRIVE_CREDENTIAL = { id: "36SWGQsLOy8AtByx", name: "Google Drive Crew System" };
+const GOOGLE_DRIVE_CREDENTIAL = { id: "fXAOobHIOV39kLNd", name: "Google Drive Crew System" };
 const AGENT_WORKFLOWS = {
   strategist: { id: "VXBmmqF8gIljYDsd", name: "CS_AGENT_STRATEGIST" },
   audience: { id: "agRG9BP0CbQ11da0", name: "CS_AGENT_AUDIENCE_PSYCHOLOGIST" },
@@ -340,7 +340,7 @@ return [{ json: {
   ...input,
   job_id,
   resume_request,
-  project_slug: input.project_slug || 'le_robot'
+  project_slug: input.project_slug || ''
 } }];`,
     [-220, 0],
   );
@@ -391,7 +391,7 @@ for (const agent of allAgentOrder) {
   agent_statuses[agent] = isComplete ? 'completed' : (status || 'missing');
   if (isComplete) agent_outputs[agent] = run.handoff;
 }
-const project_slug = job.project_slug || request.project_slug || 'le_robot';
+const project_slug = job.project_slug || request.project_slug || '';
 const request_message = job.request_message || request.resume_request || '';
 const normalized = [request_message, request.resume_request, job.job_type, job.current_phase].join(' ').toLowerCase();
 const hasFacebook = /\b(facebook|fb|meta)\b/i.test(normalized);
@@ -435,9 +435,9 @@ const needs = {};
 for (const agent of allAgentOrder) needs[agent] = required_agents.includes(agent) && agent_statuses[agent] !== 'completed';
 const firstMissing = required_agents.find((agent) => needs[agent]) || 'synthesis_only';
 const stable_context = [
-  'Koudous DAOUDA, surnom : Le Robot.',
-  'Expertise : automatisation n8n, Python, IA operationnelle et applications web.',
-  'Objectif : dominer Facebook et LinkedIn avec une marque personnelle premium, directe et concrete.'
+  'Projet actif: ' + project_slug + '.',
+  'Ne suppose jamais l identite du porteur, la marque, la cible ou les plateformes.',
+  'Utilise seulement le contexte du job, les checkpoints agents et les documents du projet.'
 ].join('\\n');
 return [{ json: {
   ...request,
@@ -1085,7 +1085,7 @@ return [{ json: { ...input, should_resume, resume_job_id, resume_request: chatIn
     [
       { fieldId: "event_id", fieldValue: "={{ 'event_' + Date.now().toString(36) + '_' + Math.random().toString(16).slice(2, 10) }}" },
       { fieldId: "job_id", fieldValue: "={{ $('Resume Request Router').first().json.resume_job_id }}" },
-      { fieldId: "project_slug", fieldValue: "={{ $('Resume Request Router').first().json.project_slug || 'le_robot' }}" },
+      { fieldId: "project_slug", fieldValue: "={{ $('Resume Request Router').first().json.project_slug || '' }}" },
       { fieldId: "status", fieldValue: "running" },
       { fieldId: "message", fieldValue: "Reprise ciblée demandée depuis le chat. Le worker va lire les checkpoints." },
       { fieldId: "percent_estimate", fieldValue: "5" },
@@ -1107,7 +1107,7 @@ return [{ json: { ...input, should_resume, resume_job_id, resume_request: chatIn
         mappingMode: "defineBelow",
         value: {
           job_id: "={{ $('Resume Request Router').first().json.resume_job_id }}",
-          project_slug: "={{ $('Resume Request Router').first().json.project_slug || 'le_robot' }}",
+          project_slug: "={{ $('Resume Request Router').first().json.project_slug || '' }}",
           resume_request: "={{ $('Resume Request Router').first().json.resume_request }}",
         },
         matchingColumns: [],
@@ -1131,7 +1131,7 @@ const output = [
   "",
   "Je vais relire les checkpoints agents, relancer seulement ce qui manque, puis recréer le livrable final."
 ].join('\\n');
-return [{ json: { output, job_id: resume.resume_job_id, project_slug: resume.project_slug || 'le_robot', status: 'running', is_safe_public_response: true } }];`,
+return [{ json: { output, job_id: resume.resume_job_id, project_slug: resume.project_slug || '', status: 'running', is_safe_public_response: true } }];`,
     [300, -520],
   );
 
